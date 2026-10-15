@@ -1,5 +1,6 @@
 // Index filters: status chips plus thesis and horizon-year selects. The table reads fully with
-// JavaScript off; this only hides rows. Nothing is stored.
+// JavaScript off; this only hides rows. Nothing is stored. The chips use the site's .chip style,
+// which shows the selected one through aria-pressed.
 (function () {
   var box = document.querySelector("[data-filters]");
   var table = document.querySelector("[data-calls]");
@@ -16,14 +17,13 @@
                (!state.year || r.getAttribute("data-year") === state.year);
       if (ok) { r.removeAttribute("hidden"); shown++; } else { r.setAttribute("hidden", ""); }
     });
-    if (empty) { if (shown) empty.setAttribute("hidden", ""); else empty.removeAttribute("hidden"); }
+    if (empty) { if (shown || !rows.length) empty.setAttribute("hidden", ""); else empty.removeAttribute("hidden"); }
   }
 
   box.querySelectorAll("button[data-filter]").forEach(function (b) {
     b.addEventListener("click", function () {
-      var group = b.parentNode;
-      group.querySelectorAll("button").forEach(function (x) { x.classList.remove("is-active"); });
-      b.classList.add("is-active");
+      b.parentNode.querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-pressed", "false"); });
+      b.setAttribute("aria-pressed", "true");
       state[b.getAttribute("data-filter")] = b.getAttribute("data-value");
       apply();
     });

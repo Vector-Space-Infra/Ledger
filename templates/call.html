@@ -1,90 +1,91 @@
 {% extends "base.html" %}
 {% block title %}{{ call.title }}{% endblock %}
 {% block description %}{{ call.claim|truncate(150) }}{% endblock %}
+{% block path %}/ledger/{{ call.id }}/{% endblock %}
 {% block content %}
-<p class="crumbs"><a href="/ledger/">Calls</a> <span class="muted">/</span> <span class="mono">{{ call.id }}</span></p>
-<h1 class="call-title">{{ call.title }}</h1>
+<p class="ledger-crumbs"><a class="hv-slate" href="/ledger/">← Calls</a> <span class="ledger-mono">{{ call.id }}</span></p>
+<h1 class="ledger-title ledger-title--call">{{ call.title }}</h1>
 {% if call.superseded_by %}
-<p class="notice">Superseded by {% for s in call.superseded_by %}<a href="/ledger/{{ s }}/">{{ s }}</a>{% if not loop.last %}, {% endif %}{% endfor %}. This entry still resolves on its own terms.</p>
+<p class="ledger-notice">Superseded by {% for s in call.superseded_by %}<a class="ledger-link" href="/ledger/{{ s }}/">{{ s }}</a>{% if not loop.last %}, {% endif %}{% endfor %}. This entry still resolves on its own terms.</p>
 {% endif %}
 {% if call.supersedes %}
-<p class="muted small">Corrects or sharpens <a href="/ledger/{{ call.supersedes }}/">{{ call.supersedes }}</a>.</p>
+<p class="ledger-supersedes">Corrects or sharpens <a class="ledger-link" href="/ledger/{{ call.supersedes }}/">{{ call.supersedes }}</a>.</p>
 {% endif %}
 
 <blockquote class="claim">{{ call.claim }}</blockquote>
 
 <dl class="facts">
-  <div><dt>Made on</dt><dd class="mono">{{ call.made_on }}</dd></div>
-  <div><dt>Resolves on</dt><dd class="mono">{{ call.resolves_on }}</dd></div>
-  <div><dt>Confidence</dt><dd class="mono">{{ call.confidence }}%</dd></div>
-  <div><dt>Status</dt><dd><span class="chip chip--{{ call.status }}">{{ call.status_label }}</span></dd></div>
+  <div><dt>Made on</dt><dd class="ledger-mono">{{ call.made_on }}</dd></div>
+  <div><dt>Resolves on</dt><dd class="ledger-mono">{{ call.resolves_on }}</dd></div>
+  <div><dt>Confidence</dt><dd class="ledger-mono">{{ call.confidence }}%</dd></div>
+  <div><dt>Status</dt><dd><span class="status-chip status-chip--{{ call.status }}">{{ call.status_label }}</span></dd></div>
 </dl>
-<p class="proof mono small">
-  {% if call.commit_url %}<a href="{{ call.commit_url }}">commit {{ call.first_short }}</a>{% else %}<span class="muted">not yet committed</span>{% endif %}
-  · {% if call.wayback_url %}<a href="{{ call.wayback_url }}">archived copy</a>{% else %}<span class="muted">archive pending</span>{% endif %}
+<p class="proof">
+  {% if call.commit_url %}<a class="hv-slate" href="{{ call.commit_url }}">Commit {{ call.first_short }}</a>{% else %}<span>Not yet committed</span>{% endif %}
+  {% if call.wayback_url %}<a class="hv-slate" href="{{ call.wayback_url }}">Archived copy</a>{% else %}<span>Archive pending</span>{% endif %}
 </p>
 
 {% if call.body_html %}
-<section class="section"><h2>Reasoning</h2>{{ call.body_html|safe }}</section>
+<section class="ledger-section"><h2 class="ledger-label">Reasoning</h2><div class="ledger-body">{{ call.body_html|safe }}</div></section>
 {% endif %}
 
-<section class="section">
-  <h2>Consensus at the time</h2>
-  <ul class="plain">
+<section class="ledger-section">
+  <h2 class="ledger-label">Consensus at the time</h2>
+  <ul class="ledger-list">
   {% for s in call.consensus %}
-    <li><a href="{{ s.url }}">{{ s.url|replace("https://","")|replace("http://","")|truncate(60) }}</a> — {{ s.summary }}</li>
+    <li><span>{{ s.summary }}</span><a class="ledger-source hv-slate" href="{{ s.url }}">{{ s.url|replace("https://","")|replace("http://","")|truncate(60) }}</a></li>
   {% endfor %}
   </ul>
 </section>
 
-<section class="section">
-  <h2>Resolution rule</h2>
+<section class="ledger-section">
+  <h2 class="ledger-label">Resolution rule</h2>
   <p>{{ call.resolution_rule }}</p>
 </section>
 
-<section class="section">
-  <h2>Leading indicators</h2>
-  <ol class="indicators">
+<section class="ledger-section">
+  <h2 class="ledger-label">Leading indicators</h2>
+  <ol class="ledger-list ledger-list--numbered">
   {% for i in call.indicators %}
-    <li>{{ i.what }} <span class="muted small">(checked {{ i.cadence }})</span>
-      {% if i.latest %}<div class="small">Latest, <span class="mono">{{ i.latest.date }}</span>: {{ i.latest.note }}{% if i.latest.url %} <a href="{{ i.latest.url }}">source</a>{% endif %}</div>{% endif %}
+    <li><span class="ledger-mono ledger-n">{{ "%02d"|format(i.n) }}</span><span>{{ i.what }} <span class="ledger-muted">(checked {{ i.cadence }})</span>
+      {% if i.latest %}<span class="ledger-latest">Latest, <span class="ledger-mono">{{ i.latest.date }}</span>: {{ i.latest.note }}{% if i.latest.url %} <a class="ledger-link" href="{{ i.latest.url }}">source</a>{% endif %}</span>{% endif %}</span>
     </li>
   {% endfor %}
   </ol>
 </section>
 
-<section class="section">
-  <h2>What changes my mind</h2>
+<section class="ledger-section">
+  <h2 class="ledger-label">What changes my mind</h2>
   <p>{{ call.changes_my_mind }}</p>
 </section>
 
-<section class="section">
-  <h2>Who this is for</h2>
-  <ul class="plain">
+<section class="ledger-section">
+  <h2 class="ledger-label">Who this is for</h2>
+  <ul class="ledger-list">
   {% for w in call.implies_for %}
-    <li><strong>{{ w.who }}</strong> — {{ w.decision }}</li>
+    <li><strong>{{ w.who }}</strong><span>{{ w.decision }}</span></li>
   {% endfor %}
   </ul>
-  {% if call.service %}<p class="small">Related service: <a href="{{ call.service_url }}">{{ call.service }}</a></p>{% endif %}
+  {% if call.service %}<p class="ledger-service">Related service: <a class="ledger-link" href="{{ call.service_url }}">{{ call.service }}</a></p>{% endif %}
 </section>
 
 {% if call.updates %}
-<section class="section">
-  <h2>Updates</h2>
-  <ul class="updates">
+<section class="ledger-section">
+  <h2 class="ledger-label">Updates</h2>
+  <ul class="ledger-updates">
   {% for u in call.updates %}
-    <li><span class="mono">{{ u.date }}</span> {{ u.note|urlize }}{% if u.url %} <a href="{{ u.url }}">link</a>{% endif %}</li>
+    <li><span class="ledger-mono">{{ u.date }}</span><span>{{ u.note|urlize }}{% if u.url %} <a class="ledger-link" href="{{ u.url }}">link</a>{% endif %}</span></li>
   {% endfor %}
   </ul>
 </section>
 {% endif %}
 
 {% if call.status in ("resolved_yes", "resolved_no", "void", "retracted") %}
-<section class="section resolution">
-  <h2>Resolution</h2>
-  <p><span class="chip chip--{{ call.status }}">{{ call.status_label }}</span>
-    {% if call.resolved_on %}<span class="mono small muted">on {{ call.resolved_on }}</span>{% endif %}
-    {% if call.brier is not none %} <span class="mono small muted">· Brier {{ "%.3f"|format(call.brier) }}{% if call.hit is not none %} · {{ "hit" if call.hit else "miss" }}{% endif %}</span>{% endif %}
+<section class="ledger-section resolution">
+  <h2 class="ledger-label">Resolution</h2>
+  <p><span class="status-chip status-chip--{{ call.status }}">{{ call.status_label }}</span>
+    {% if call.resolved_on %}<span class="ledger-mono ledger-muted">on {{ call.resolved_on }}</span>{% endif %}
+    {% if call.brier is not none %}<span class="ledger-mono ledger-muted">Brier {{ "%.3f"|format(call.brier) }}{% if call.hit is not none %} · {{ "hit" if call.hit else "miss" }}{% endif %}</span>{% endif %}
   </p>
   {% if call.outcome %}<h3>What happened</h3><p>{{ call.outcome|urlize }}</p>{% endif %}
   {% if call.postmortem %}<h3>Postmortem</h3><p>{{ call.postmortem|urlize }}</p>{% endif %}

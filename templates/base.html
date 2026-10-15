@@ -1,41 +1,234 @@
-<!doctype html>
+{#- Site chrome for the ledger pages: head, header, footer and scripts copied from the
+    site (vectorspaceinfrasite, src/_includes/base.njk) so /ledger/ looks and behaves like every other
+    page. When the site's menu, footer or analytics change, update this file to match. -#}
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{% block title %}Calls{% endblock %} · VectorSpace Infrastructure</title>
-<meta name="description" content="{% block description %}A public, dated, scored record of VectorSpace Infrastructure's forecasts about the data center market.{% endblock %}">
-{# NOVA: replace the two font/stylesheet lines below with the site's own <link> tags, then delete this comment. #}
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,900;100,500&family=Space+Mono&display=swap" rel="stylesheet">
+{% set page_title %}{% block title %}Calls{% endblock %} | VectorSpace Infrastructure{% endset %}
+{% set page_desc %}{% block description %}A public, dated, scored record of VectorSpace Infrastructure's forecasts about the data center market.{% endblock %}{% endset %}
+{% set page_url %}{{ base_url }}{% block path %}/ledger/{% endblock %}{% endset %}
+<title>{{ page_title }}</title>
+<meta name="description" content="{{ page_desc }}">
+<link rel="canonical" href="{{ page_url }}">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="VectorSpace Infrastructure">
+<meta property="og:title" content="{{ page_title }}">
+<meta property="og:description" content="{{ page_desc }}">
+<meta property="og:url" content="{{ page_url }}">
+<meta property="og:image" content="{{ base_url }}/assets/img/vectorspace-social.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="VectorSpace Infrastructure">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ page_title }}">
+<meta name="twitter:description" content="{{ page_desc }}">
+<meta name="twitter:image" content="{{ base_url }}/assets/img/vectorspace-social.png">
+
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/assets/img/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#F7F4EC">
+
+<link rel="stylesheet" href="/assets/css/fonts.css">
+<link rel="stylesheet" href="/assets/css/site.css">
 <link rel="stylesheet" href="/ledger/ledger.css">
+
+<!-- Google Tag Manager -->
+<script>
+  /* Container id lives in src/_data/site.json; remove it there to switch this off. */
+  (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-T6WL885H');
+</script>
+<!-- End Google Tag Manager -->
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-6FT3QX3M61"></script>
+<script>
+  /* Measurement id lives in src/_data/site.json; remove it there to switch this off. */
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-6FT3QX3M61');
+</script>
+
+<script type="text/javascript">
+  /* Microsoft Clarity: heatmaps and session replay.
+     Project id lives in src/_data/site.json; remove it there to switch this off. */
+  (function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+  })(window, document, "clarity", "script", "yiqbtg4pf5");
+</script>
+<script>document.documentElement.className += " js";</script>
 </head>
 <body>
-{# NOVA: replace this header with the site's nav, with "Calls" marked current. #}
-<header class="site-nav">
-  <a class="site-nav__brand" href="/">VectorSpace Infrastructure</a>
-  <nav>
-    <a href="/services/">Services</a>
-    <a href="/work/">Work</a>
-    <a href="/ledger/" aria-current="page">Calls</a>
-    <a href="/notes/">Notes</a>
-  </nav>
-</header>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-T6WL885H"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+<a class="skip-link" href="#main">Skip to content</a>
 
-<main class="ledger">
+<div class="page">
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="brand" href="/" aria-label="VectorSpace Infrastructure, home">
+        <svg viewBox="0 0 6 6" width="28" height="28" aria-hidden="true"><rect width="6" height="6" fill="#D8D2C0"></rect><path d="M6 0 V6 H0 Z" fill="#000000"></path><rect x="2.5" y="2.5" width="1" height="1" fill="#F7F4EC"></rect></svg>
+        <span class="brand-word">VECTOR<span>SPACE</span></span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+      <nav class="site-nav" id="site-nav" aria-label="Primary">
+        <a class="nav-item nav-link" href="/">Home</a><a class="nav-item nav-link" href="/services/">Services</a><a class="nav-item nav-link" href="/approach/">Approach</a><a class="nav-item nav-link" href="/work/">Work</a><a class="nav-item is-current" href="/ledger/" aria-current="{% block nav_current %}true{% endblock %}"><span class="nav-dot" aria-hidden="true"></span>Calls</a><a class="nav-item nav-link" href="/about/">About</a><a class="nav-item nav-cta" href="/contact/">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="ledger">
 {% block content %}{% endblock %}
-</main>
 
-<footer class="ledger-footer">
-  <p>
-    <a href="/ledger/method/">How calls are written, scored and timestamped</a> ·
-    <a href="{{ repo_url }}">Repository</a>
-    {% if latest_tag %} · <a href="{{ latest_tag.url }}">Latest release {{ latest_tag.name }}</a>{% endif %}
-    {% if has_prior %} · <a href="/ledger/prior/">Prior calls</a>{% endif %}
-  </p>
-  {# NOVA: replace with the site footer. #}
-  <p class="muted">© VectorSpace Infrastructure · AI Vector Studios LLC</p>
-</footer>
+      <p class="ledger-meta">
+        <a class="hv-slate" href="/ledger/method/">How calls are written, scored and timestamped</a>
+        <a class="hv-slate" href="{{ repo_url }}">Repository</a>
+        {% if latest_tag %}<a class="hv-slate" href="{{ latest_tag.url }}">Latest release {{ latest_tag.name }}</a>{% endif %}
+        {% if has_prior %}<a class="hv-slate" href="/ledger/prior/">Prior calls</a>{% endif %}
+      </p>
+    </div>
+  </main>
+  <footer style="background:#000000;color:#F7F4EC">
+    <div style="max-width:1180px;margin:0 auto;padding:clamp(40px,5vw,64px) 20px 28px">
+      <div style="display:flex;flex-wrap:wrap;gap:clamp(28px,5vw,64px)">
+        <div style="flex:1 1 300px;min-width:250px">
+          <a class="footer-brand" href="/" aria-label="VectorSpace Infrastructure, home" style="display:flex;align-items:flex-start;gap:16px">
+            <svg viewBox="0 0 6 6" width="46" height="46" aria-hidden="true" style="display:block;flex:0 0 auto"><rect width="6" height="6" fill="#5C5A52"></rect><path d="M6 0 V6 H0 Z" fill="#F7F4EC"></path><rect x="2.5" y="2.5" width="1" height="1" fill="#000000"></rect></svg>
+            <span>
+              <span style="display:block;font-family:Archivo,sans-serif;font-variation-settings:'wdth' 125;font-weight:900;font-size:22px;line-height:0.98;letter-spacing:-0.01em;text-transform:uppercase;color:#F7F4EC">Vector<br />
+                <span style="color:#D8D2C0">Space</span></span>
+              <span class="lockup-sub" style="display:block;margin-top:7px;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.34em;text-transform:uppercase;color:#D8D2C0">Infrastructure</span>
+            </span>
+          </a>
+          <p style="margin-top:22px;font-size:15px;line-height:1.55;max-width:38ch;color:#F7F4EC">Independent diligence for power-constrained compute. Cash fees only.</p>
+        </div>
+        <div style="flex:0 1 180px;min-width:150px">
+          <p style="font-family:'Space Mono',monospace;font-size:12px;letter-spacing:0.3em;text-transform:uppercase;color:#D8D2C0">Pages</p>
+          <ul style="margin-top:16px;display:grid;gap:11px;font-family:'Space Mono',monospace;font-size:13px">
+            <li><a class="footer-link hv-grid" href="/" style="color:#F7F4EC">Home</a></li>
+            <li><a class="footer-link hv-grid" href="/services/" style="color:#F7F4EC">Services</a></li>
+            <li><a class="footer-link hv-grid" href="/approach/" style="color:#F7F4EC">Approach</a></li>
+            <li><a class="footer-link hv-grid" href="/work/" style="color:#F7F4EC">Work</a></li>
+            <li><a class="footer-link hv-grid" href="/ledger/" style="color:#F7F4EC">Calls</a></li><li><a class="footer-link hv-grid" href="/notes/" style="color:#F7F4EC">Notes</a></li>
+            <li><a class="footer-link hv-grid" href="/about/" style="color:#F7F4EC">About</a></li>
+            <li><a class="footer-link hv-grid" href="/contact/" style="color:#F7F4EC">Contact</a></li>
+            
+          </ul>
+        </div>
+        <div style="flex:0 1 260px;min-width:200px">
+          <p style="font-family:'Space Mono',monospace;font-size:12px;letter-spacing:0.3em;text-transform:uppercase;color:#D8D2C0">Contact</p>
+          <ul style="margin-top:16px;display:grid;gap:11px;font-family:'Space Mono',monospace;font-size:13px">
+            <li style="overflow-wrap:anywhere"><a class="footer-link hv-grid" href="mailto:advisory@vectorspaceinfra.com" style="color:#F7F4EC">advisory@vectorspaceinfra.com</a></li>
+            <li style="color:#D8D2C0">Reply within two business days</li>
+            <li><a class="footer-link hv-grid" href="/contact/" style="color:#D8D2C0">Scoping call, 30 minutes, no fee</a></li>
+          </ul>
+        </div>
+      </div>
+      <div style="margin-top:clamp(32px,4vw,52px);padding-top:18px;border-top:1px solid #5C5A52;display:flex;flex-wrap:wrap;gap:8px 28px;font-family:'Space Mono',monospace;font-size:12px;letter-spacing:0.1em;color:#D8D2C0">
+        <span>© {{ today[:4] }} VectorSpace Infrastructure, operating under the registered company AI Vector Studios LLC</span>
+        <span>No success fees · no brokerage · no build work</span>
+      </div>
+    </div>
+  </footer>
+</div>
+<script>
+/* Email links. On a machine with no mail app set up, a mailto click does
+   nothing visible, which reads as a broken link. The link still opens mail
+   where it can; it also copies the address and says so. */
+(function () {
+  var toast;
+  function say(msg) {
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.className = 'copy-toast';
+      toast.setAttribute('role', 'status');
+      toast.setAttribute('aria-live', 'polite');
+      document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.classList.add('is-on');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function () { toast.classList.remove('is-on'); }, 2600);
+  }
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest ? e.target.closest('a[href^="mailto:"]') : null;
+    if (!a || !navigator.clipboard) return;
+    var addr = decodeURIComponent(a.getAttribute('href').slice(7).split('?')[0]);
+    navigator.clipboard.writeText(addr).then(function () {
+      say('Copied ' + addr);
+    }, function () {});
+  });
+})();
+</script>
+<script>
+/* Mobile menu. The nav is a plain list until this runs, so with scripting off
+   it stays visible and usable rather than collapsing into a button nothing can
+   open. Written to handle several headers on one page, which is what the
+   click-through preview builds. */
+(function () {
+  var mq = window.matchMedia('(max-width: 760px)');
+  var toggles = [].slice.call(document.querySelectorAll('.nav-toggle'));
+  if (!toggles.length) return;
+
+  function navFor(toggle) { return toggle.parentNode.querySelector('.site-nav'); }
+  function close(toggle) {
+    var nav = navFor(toggle);
+    if (nav) nav.hidden = true;
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.textContent = 'Menu';
+  }
+  function open(toggle) {
+    var nav = navFor(toggle);
+    if (nav) nav.hidden = false;
+    toggle.setAttribute('aria-expanded', 'true');
+    toggle.textContent = 'Close';
+  }
+  function sync() {
+    toggles.forEach(function (t) {
+      if (mq.matches) { close(t); }
+      else { var n = navFor(t); if (n) n.hidden = false; t.setAttribute('aria-expanded', 'false'); t.textContent = 'Menu'; }
+    });
+  }
+
+  toggles.forEach(function (t) {
+    t.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var nav = navFor(t);
+      if (nav && nav.hidden) { open(t); } else { close(t); }
+    });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape' || !mq.matches) return;
+    toggles.forEach(function (t) {
+      var nav = navFor(t);
+      if (nav && !nav.hidden) { close(t); t.focus(); }
+    });
+  });
+  document.addEventListener('click', function (e) {
+    if (!mq.matches) return;
+    toggles.forEach(function (t) {
+      var nav = navFor(t);
+      if (nav && !nav.hidden && !nav.contains(e.target)) close(t);
+    });
+  });
+  if (mq.addEventListener) { mq.addEventListener('change', sync); } else if (mq.addListener) { mq.addListener(sync); }
+  sync();
+})();
+</script>
 <script src="/ledger/ledger.js" defer></script>
 </body>
 </html>

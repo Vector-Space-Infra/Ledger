@@ -1,47 +1,48 @@
 {% extends "base.html" %}
 {% block title %}Calls{% endblock %}
+{% block nav_current %}page{% endblock %}
 {% block content %}
 <h1 class="ledger-title">Calls</h1>
-<p class="ledger-lead">A public, dated, scored record of our forecasts about the data center market. Every call is frozen in a public repository on the day it is made, with a resolution rule named in advance. <a href="/ledger/method/">How it works.</a></p>
+<p class="ledger-lead">A public, dated, scored record of our forecasts about the data center market. Every call is frozen in a public repository on the day it is made, with a resolution rule named in advance. <a class="ledger-link" href="/ledger/method/">How it works.</a></p>
 
-<section class="headline" aria-label="Headline numbers">
-  <div class="headline__item"><span class="headline__num">{{ scores.calls_made }}</span><span class="headline__label">Calls made</span></div>
-  <div class="headline__item"><span class="headline__num">{{ scores.resolved }}</span><span class="headline__label">Resolved</span></div>
-  <div class="headline__item"><span class="headline__num">{% if scores.hit_rate is not none %}{{ "%.0f"|format(scores.hit_rate * 100) }}%{% else %}&mdash;{% endif %}</span><span class="headline__label">Hit rate</span></div>
-  <div class="headline__item"><span class="headline__num">{% if scores.brier is not none %}{{ "%.3f"|format(scores.brier) }}{% else %}&mdash;{% endif %}</span><span class="headline__label">Brier score <span class="mono">N={{ scores.brier_n }}</span></span></div>
-</section>
+<div class="headline" role="group" aria-label="Headline numbers">
+  <div class="headline-item"><span class="headline-num">{{ scores.calls_made }}</span><span class="headline-label">Calls made</span></div>
+  <div class="headline-item"><span class="headline-num">{{ scores.resolved }}</span><span class="headline-label">Resolved</span></div>
+  <div class="headline-item"><span class="headline-num">{% if scores.hit_rate is not none %}{{ "%.0f"|format(scores.hit_rate * 100) }}%{% else %}&mdash;{% endif %}</span><span class="headline-label">Hit rate</span></div>
+  <div class="headline-item"><span class="headline-num">{% if scores.brier is not none %}{{ "%.3f"|format(scores.brier) }}{% else %}&mdash;{% endif %}</span><span class="headline-label">Brier score</span><span class="headline-n">N={{ scores.brier_n }}</span></div>
+</div>
 {% if scores.void_flag %}
-<p class="notice">Void rate is {{ "%.0f"|format(scores.void_rate * 100) }}% of calls made, above the 10% the ledger allows itself. Read the postmortems.</p>
+<p class="ledger-notice">Void rate is {{ "%.0f"|format(scores.void_rate * 100) }}% of calls made, above the 10% the ledger allows itself. Read the postmortems.</p>
 {% endif %}
 
 {% if strip and strip.calls %}
 <section class="strip" aria-label="Resolved this quarter">
-  <h2 class="strip__title">Resolved in {{ strip.quarter }}</h2>
-  <ul class="strip__list">
+  <h2 class="ledger-label">Resolved in {{ strip.quarter }}</h2>
+  <ul class="strip-list">
   {% for c in strip.calls %}
-    <li><span class="chip chip--{{ c.status }}">{{ c.status_label }}</span> <a href="{{ c.url }}">{{ c.title }}</a> <span class="mono muted">{{ c.confidence }}%</span></li>
+    <li><span class="status-chip status-chip--{{ c.status }}">{{ c.status_label }}</span> <a class="ledger-link" href="{{ c.url }}">{{ c.title }}</a> <span class="ledger-mono">{{ c.confidence }}%</span></li>
   {% endfor %}
   </ul>
 </section>
 {% endif %}
 
 <div class="filters" data-filters>
-  <div class="filters__group" role="group" aria-label="Filter by status">
-    <button class="filter is-active" data-filter="status" data-value="">All</button>
-    <button class="filter" data-filter="status" data-value="open">Open</button>
-    <button class="filter" data-filter="status" data-value="flagged">Flagged</button>
-    <button class="filter" data-filter="status" data-value="resolved">Resolved</button>
-    <button class="filter" data-filter="status" data-value="void">Void</button>
+  <div class="filters-group" role="group" aria-label="Filter by status">
+    <button class="chip" type="button" data-filter="status" data-value="" aria-pressed="true">All</button>
+    <button class="chip" type="button" data-filter="status" data-value="open" aria-pressed="false">Open</button>
+    <button class="chip" type="button" data-filter="status" data-value="flagged" aria-pressed="false">Flagged</button>
+    <button class="chip" type="button" data-filter="status" data-value="resolved" aria-pressed="false">Resolved</button>
+    <button class="chip" type="button" data-filter="status" data-value="void" aria-pressed="false">Void</button>
   </div>
   {% if thesis_slugs|length > 1 %}
-  <label class="filters__select">Thesis
+  <label class="filters-select">Thesis
     <select data-filter="thesis"><option value="">All</option>
     {% for s in thesis_slugs %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
     </select>
   </label>
   {% endif %}
   {% if years|length > 1 %}
-  <label class="filters__select">Resolves in
+  <label class="filters-select">Resolves in
     <select data-filter="year"><option value="">Any year</option>
     {% for y in years %}<option value="{{ y }}">{{ y }}</option>{% endfor %}
     </select>
@@ -51,22 +52,22 @@
 
 <table class="calls" data-calls>
   <thead>
-    <tr><th>Made on</th><th>Call</th><th>Resolves on</th><th class="num">Confidence</th><th>Status</th><th>Outcome</th></tr>
+    <tr><th scope="col">Made on</th><th scope="col">Call</th><th scope="col">Resolves on</th><th scope="col" class="num">Confidence</th><th scope="col">Status</th><th scope="col">Outcome</th></tr>
   </thead>
   <tbody>
   {% for c in calls %}
     <tr data-status="{{ c.status_group }}" data-thesis="{{ c.thesis }}" data-year="{{ c.horizon_year }}">
-      <td data-label="Made on" class="mono">{{ c.made_on }}</td>
-      <td data-label="Call"><a href="{{ c.url }}">{{ c.title }}</a> <span class="mono muted">{{ c.id }}</span></td>
-      <td data-label="Resolves on" class="mono">{{ c.resolves_on }}</td>
-      <td data-label="Confidence" class="mono num">{{ c.confidence }}%</td>
-      <td data-label="Status"><span class="chip chip--{{ c.status }}">{{ c.status_label }}</span></td>
-      <td data-label="Outcome">{% if c.result %}<span class="mono">{{ c.result }}</span>{% if c.brier is not none %} <span class="mono muted">{{ "%.3f"|format(c.brier) }}</span>{% endif %}{% endif %}</td>
+      <td data-label="Made on" class="ledger-mono">{{ c.made_on }}</td>
+      <td data-label="Call" class="call-cell"><a class="call-link" href="{{ c.url }}">{{ c.title }}</a><span class="ledger-mono call-id">{{ c.id }}</span></td>
+      <td data-label="Resolves on" class="ledger-mono">{{ c.resolves_on }}</td>
+      <td data-label="Confidence" class="ledger-mono num">{{ c.confidence }}%</td>
+      <td data-label="Status"><span class="status-chip status-chip--{{ c.status }}">{{ c.status_label }}</span></td>
+      <td data-label="Outcome">{% if c.result %}<span class="ledger-mono">{{ c.result }}</span>{% if c.brier is not none %} <span class="ledger-mono ledger-muted">{{ "%.3f"|format(c.brier) }}</span>{% endif %}{% endif %}</td>
     </tr>
   {% else %}
-    <tr><td colspan="6" class="muted">No calls yet.</td></tr>
+    <tr class="calls-empty"><td colspan="6">No calls yet.</td></tr>
   {% endfor %}
   </tbody>
 </table>
-<p class="muted small" data-empty hidden>No calls match these filters.</p>
+<p class="ledger-muted" data-empty hidden>No calls match these filters.</p>
 {% endblock %}

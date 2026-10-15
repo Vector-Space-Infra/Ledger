@@ -31,12 +31,15 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import ledgerlib as L  # noqa: E402
 import score as scoremod  # noqa: E402
 
-# NOVA: map each service name (as written in a call's `service` field) to its page on the site.
+# Each service name, as written in a call's `service` field, mapped to its section on the site's
+# Services page (ids from the site's src/_data/services.json). Unknown names link to /services/.
 SERVICE_URLS = {
-    "Site and Power Connection Review": "/services/#site-and-power",
-    "Data Center Business Model Comparison": "/services/#business-model",
-    "Customer Demand and Contract Assessment": "/services/#demand-and-contract",
-    "Utility Application Guidance": "/services/#utility-application",
+    "Site and Power Connection Review": "/services/#line-01",
+    "Lender Diligence Memo": "/services/#lender-memo",
+    "Data Center Business Model Comparison": "/services/#line-02",
+    "Customer Demand and Contract Assessment": "/services/#line-03",
+    "Utility Application Guidance": "/services/#utility",
+    "Commissioning Data & Turnover Support": "/services/#commissioning",
 }
 
 MD = markdown.Markdown(extensions=["tables", "fenced_code", "sane_lists"])

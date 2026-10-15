@@ -1,8 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Method{% endblock %}
+{% block description %}How the VectorSpace Infrastructure forecast ledger writes, timestamps, resolves and scores its calls.{% endblock %}
+{% block path %}/ledger/method/{% endblock %}
 {% block content %}
-<p class="crumbs"><a href="/ledger/">Calls</a> <span class="muted">/</span> Method</p>
-<article class="prose">
+<p class="ledger-crumbs"><a class="hv-slate" href="/ledger/">← Calls</a></p>
+<article class="note-body ledger-prose">
 {{ body_html|safe }}
 </article>
 {% endblock %}
