@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}{{ call.title }}{% endblock %}
+{% block description %}{{ call.claim|truncate(150) }}{% endblock %}
+{% block content %}
+<p class="crumbs"><a href="/ledger/">Calls</a> <span class="muted">/</span> <span class="mono">{{ call.id }}</span></p>
+<h1 class="call-title">{{ call.title }}</h1>
+{% if call.superseded_by %}
+<p class="notice">Superseded by {% for s in call.superseded_by %}<a href="/ledger/{{ s }}/">{{ s }}</a>{% if not loop.last %}, {% endif %}{% endfor %}. This entry still resolves on its own terms.</p>
+{% endif %}
+{% if call.supersedes %}
+<p class="muted small">Corrects or sharpens <a href="/ledger/{{ call.supersedes }}/">{{ call.supersedes }}</a>.</p>
+{% endif %}
+
+<blockquote class="claim">{{ call.claim }}</blockquote>
+
+<dl class="facts">
+  <div><dt>Made on</dt><dd class="mono">{{ call.made_on }}</dd></div>
+  <div><dt>Resolves on</dt><dd class="mono">{{ call.resolves_on }}</dd></div>
+  <div><dt>Confidence</dt><dd class="mono">{{ call.confidence }}%</dd></div>
+  <div><dt>Status</dt><dd><span class="chip chip--{{ call.status }}">{{ call.status_label }}</span></dd></div>
+</dl>
+<p class="proof mono small">
+  {% if call.commit_url %}<a href="{{ call.commit_url }}">commit {{ call.first_short }}</a>{% else %}<span class="muted">not yet committed</span>{% endif %}
+  · {% if call.wayback_url %}<a href="{{ call.wayback_url }}">archived copy</a>{% else %}<span class="muted">archive pending</span>{% endif %}
+</p>
+
+{% if call.body_html %}
+<section class="section"><h2>Reasoning</h2>{{ call.body_html|safe }}</section>
+{% endif %}
+
+<section class="section">
+  <h2>Consensus at the time</h2>
+  <ul class="plain">
+  {% for s in call.consensus %}
+    <li><a href="{{ s.url }}">{{ s.url|replace("https://","")|replace("http://","")|truncate(60) }}</a> — {{ s.summary }}</li>
+  {% endfor %}
+  </ul>
+</section>
+
+<section class="section">
+  <h2>Resolution rule</h2>
+  <p>{{ call.resolution_rule }}</p>
+</section>
+
+<section class="section">
+  <h2>Leading indicators</h2>
+  <ol class="indicators">
+  {% for i in call.indicators %}
+    <li>{{ i.what }} <span class="muted small">(checked {{ i.cadence }})</span>
+      {% if i.latest %}<div class="small">Latest, <span class="mono">{{ i.latest.date }}</span>: {{ i.latest.note }}{% if i.latest.url %} <a href="{{ i.latest.url }}">source</a>{% endif %}</div>{% endif %}
+    </li>
+  {% endfor %}
+  </ol>
+</section>
+
+<section class="section">
+  <h2>What changes my mind</h2>
+  <p>{{ call.changes_my_mind }}</p>
+</section>
+
+<section class="section">
+  <h2>Who this is for</h2>
+  <ul class="plain">
+  {% for w in call.implies_for %}
+    <li><strong>{{ w.who }}</strong> — {{ w.decision }}</li>
+  {% endfor %}
+  </ul>
+  {% if call.service %}<p class="small">Related service: <a href="{{ call.service_url }}">{{ call.service }}</a></p>{% endif %}
+</section>
+
+{% if call.updates %}
+<section class="section">
+  <h2>Updates</h2>
+  <ul class="updates">
+  {% for u in call.updates %}
+    <li><span class="mono">{{ u.date }}</span> {{ u.note|urlize }}{% if u.url %} <a href="{{ u.url }}">link</a>{% endif %}</li>
+  {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% if call.status in ("resolved_yes", "resolved_no", "void", "retracted") %}
+<section class="section resolution">
+  <h2>Resolution</h2>
+  <p><span class="chip chip--{{ call.status }}">{{ call.status_label }}</span>
+    {% if call.resolved_on %}<span class="mono small muted">on {{ call.resolved_on }}</span>{% endif %}
+    {% if call.brier is not none %} <span class="mono small muted">· Brier {{ "%.3f"|format(call.brier) }}{% if call.hit is not none %} · {{ "hit" if call.hit else "miss" }}{% endif %}</span>{% endif %}
+  </p>
+  {% if call.outcome %}<h3>What happened</h3><p>{{ call.outcome|urlize }}</p>{% endif %}
+  {% if call.postmortem %}<h3>Postmortem</h3><p>{{ call.postmortem|urlize }}</p>{% endif %}
+</section>
+{% endif %}
+{% endblock %}

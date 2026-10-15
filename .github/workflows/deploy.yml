@@ -1,0 +1,40 @@
+# Validates every push and pull request. On a push to main that passes, asks Cloudflare to rebuild the
+# site Worker (vectorspaceinfrasite); the site's build clones this repository and renders /ledger/.
+# Repository secret required: CF_DEPLOY_HOOK = the Worker's Deploy Hook URL
+# (Workers & Pages > vectorspaceinfrasite > Settings > Builds > Deploy Hooks, branch main).
+name: Validate and deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # full history: the immutability check reads each file's first commit
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Validate calls
+        run: python scripts/validate.py
+      - name: Score (for the log)
+        run: python scripts/score.py
+      - name: Build (proves the templates render)
+        run: python scripts/build.py --out _site/ledger
+
+  deploy:
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger the site rebuild on Cloudflare
+        env:
+          CF_DEPLOY_HOOK: ${{ secrets.CF_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$CF_DEPLOY_HOOK" ]; then echo "CF_DEPLOY_HOOK secret is not set"; exit 1; fi
+          curl -fsS -X POST "$CF_DEPLOY_HOOK"

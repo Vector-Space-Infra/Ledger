@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}{{ thesis.title }}{% endblock %}
+{% block content %}
+<p class="crumbs"><a href="/ledger/">Calls</a> <span class="muted">/</span> Thesis</p>
+<h1 class="call-title">{{ thesis.title }}</h1>
+<article class="prose">
+{{ thesis.body_html|safe }}
+</article>
+<section class="section">
+  <h2>Calls that descend from this thesis</h2>
+  <ul class="plain">
+  {% for c in thesis.calls %}
+    <li><span class="chip chip--{{ c.status }}">{{ c.status_label }}</span> <a href="{{ c.url }}">{{ c.title }}</a> <span class="mono muted small">{{ c.made_on }} · {{ c.confidence }}%</span></li>
+  {% else %}
+    <li class="muted">None yet.</li>
+  {% endfor %}
+  </ul>
+</section>
+{% endblock %}

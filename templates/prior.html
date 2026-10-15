@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Prior calls{% endblock %}
+{% block content %}
+<p class="crumbs"><a href="/ledger/">Calls</a> <span class="muted">/</span> Prior calls</p>
+<h1 class="call-title">Prior calls</h1>
+<p class="ledger-lead">Technology and macro calls made before this ledger existed, with the public post that dates each one and the source that resolved it. These are calls the author could document after the fact, so misses that were not kept are likely under-represented. They are scored on their own and never pooled with the ledger above.</p>
+<section class="headline" aria-label="Prior calls numbers">
+  <div class="headline__item"><span class="headline__num">{{ prior_scores.entries }}</span><span class="headline__label">Entries</span></div>
+  <div class="headline__item"><span class="headline__num">{% if prior_scores.hit_rate is not none %}{{ "%.0f"|format(prior_scores.hit_rate * 100) }}%{% else %}&mdash;{% endif %}</span><span class="headline__label">Hit rate</span></div>
+  <div class="headline__item"><span class="headline__num">{% if prior_scores.brier is not none %}{{ "%.3f"|format(prior_scores.brier) }}{% else %}&mdash;{% endif %}</span><span class="headline__label">Brier <span class="mono">N={{ prior_scores.brier_n }}</span></span></div>
+</section>
+<table class="calls">
+  <thead><tr><th>Date</th><th>Call</th><th>What happened</th><th>Outcome</th></tr></thead>
+  <tbody>
+  {% for p in prior %}
+    <tr>
+      <td data-label="Date" class="mono">{{ p.date }}</td>
+      <td data-label="Call">{{ p.call }}{% if p.call_link %} <a class="small" href="{{ p.call_link }}">post</a>{% endif %}{% if p.confidence %} <span class="mono muted small">{{ p.confidence }}%</span>{% endif %}</td>
+      <td data-label="What happened">{{ p.happened }}{% if p.outcome_link %} <a class="small" href="{{ p.outcome_link }}">source</a>{% endif %}</td>
+      <td data-label="Outcome" class="mono">{{ p.outcome }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

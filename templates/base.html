@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Calls{% endblock %} · VectorSpace Infrastructure</title>
+<meta name="description" content="{% block description %}A public, dated, scored record of VectorSpace Infrastructure's forecasts about the data center market.{% endblock %}">
+{# NOVA: replace the two font/stylesheet lines below with the site's own <link> tags, then delete this comment. #}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,900;100,500&family=Space+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/ledger/ledger.css">
+</head>
+<body>
+{# NOVA: replace this header with the site's nav, with "Calls" marked current. #}
+<header class="site-nav">
+  <a class="site-nav__brand" href="/">VectorSpace Infrastructure</a>
+  <nav>
+    <a href="/services/">Services</a>
+    <a href="/work/">Work</a>
+    <a href="/ledger/" aria-current="page">Calls</a>
+    <a href="/notes/">Notes</a>
+  </nav>
+</header>
+
+<main class="ledger">
+{% block content %}{% endblock %}
+</main>
+
+<footer class="ledger-footer">
+  <p>
+    <a href="/ledger/method/">How calls are written, scored and timestamped</a> ·
+    <a href="{{ repo_url }}">Repository</a>
+    {% if latest_tag %} · <a href="{{ latest_tag.url }}">Latest release {{ latest_tag.name }}</a>{% endif %}
+    {% if has_prior %} · <a href="/ledger/prior/">Prior calls</a>{% endif %}
+  </p>
+  {# NOVA: replace with the site footer. #}
+  <p class="muted">© VectorSpace Infrastructure · AI Vector Studios LLC</p>
+</footer>
+<script src="/ledger/ledger.js" defer></script>
+</body>
+</html>
