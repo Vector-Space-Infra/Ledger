@@ -7,7 +7,7 @@ Exit code 1 (and a non-empty ERROR list) blocks the deploy. Every message is
 Usage:
   python scripts/validate.py                 # validate calls/*.md (skips _example.md)
   python scripts/validate.py --check-examples   # also validate _*.md, without git checks
-  python scripts/validate.py --no-git           # skip the first-commit and append-only checks
+  python scripts/validate.py --no-git           # skip the first-commit, append-only and deletion checks
   python scripts/validate.py --root /path/to/ledger
 """
 from __future__ import annotations
@@ -251,11 +251,35 @@ def check_git(call: L.Call, root: pathlib.Path) -> tuple[list[str], list[str]]:
     return errs, warns
 
 
+def check_deleted(root: pathlib.Path) -> list[str]:
+    """Every call ever committed must still exist. Deleting one would drop a miss from the scores.
+    Returns full ERROR lines."""
+    errs: list[str] = []
+    out = L.git(root, "log", "--no-renames", "--diff-filter=A", "--format=@%h", "--name-only", "--", "calls/")
+    added: dict[str, str] = {}
+    sha = ""
+    for line in out.splitlines():
+        line = line.strip()
+        if line.startswith("@"):
+            sha = line[1:]
+        elif line.endswith(".md") and not pathlib.PurePosixPath(line).name.startswith("_"):
+            added[line] = sha  # log is newest first, so this ends on the first add
+    for rel, add_sha in sorted(added.items()):
+        if (root / rel).is_file():
+            continue
+        gone = L.git(root, "log", "-1", "--no-renames", "--diff-filter=D", "--format=%h", "--", rel, check=False)
+        where = f"deleted in {gone}" if gone else "deleted in the working tree"
+        restore = f"git checkout {gone}^ -- {rel}" if gone else f"git checkout HEAD -- {rel}"
+        errs.append(f"ERROR {rel}: file: was published in {add_sha} and {where}; published calls are never deleted "
+                    f"(void or retract it instead). Restore it with: {restore}")
+    return errs
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--root", help="ledger repository root (default: parent of scripts/)")
     ap.add_argument("--check-examples", action="store_true", help="also validate _*.md files (schema only)")
-    ap.add_argument("--no-git", action="store_true", help="skip first-commit and append-only checks")
+    ap.add_argument("--no-git", action="store_true", help="skip first-commit, append-only and deletion checks")
     ap.add_argument("--quiet", action="store_true", help="print errors only")
     args = ap.parse_args(argv)
 
@@ -263,6 +287,12 @@ def main(argv: list[str] | None = None) -> int:
     today = dt.date.today()
     paths = L.call_paths(root, include_examples=args.check_examples)
     if not paths:
+        gone = check_deleted(root) if not args.no_git and L.is_git_repo(root) else []
+        for e in gone:
+            print(e)
+        if gone:
+            print(f"\n{len(gone)} error(s). The deploy is blocked until they are fixed.")
+            return 1
         print(f"no calls found under {root / 'calls'}")
         return 0
 
@@ -294,6 +324,9 @@ def main(argv: list[str] | None = None) -> int:
             seen[cid] = c.rel
         errors += [f"ERROR {c.rel}: {e}" for e in errs]
         warnings += [f"WARN {c.rel}: {w}" for w in warns]
+
+    if use_git:
+        errors += check_deleted(root)
 
     if not args.quiet:
         for w in warnings:

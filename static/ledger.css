@@ -9,6 +9,8 @@
 }
 
 .ledger { max-width: 1180px; margin: 0 auto; padding: clamp(28px, 4vw, 48px) 20px clamp(40px, 5vw, 64px) }
+/* Raw URLs (archive links in outcomes and updates) break rather than push the page sideways on phones */
+.ledger a { overflow-wrap: anywhere }
 .ledger-mono { font-family: 'Space Mono', monospace; font-size: 13px; letter-spacing: .02em; white-space: nowrap }
 .ledger-muted { color: var(--slate) }
 .ledger-link { font-weight: 700; color: var(--ink) }
@@ -37,11 +39,15 @@
 .headline-n { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--slate) }
 
 /* Resolved this quarter */
-.strip { margin-top: 24px; background: var(--grid); padding: 18px 22px }
-.strip-list { margin-top: 12px; display: grid; gap: 8px; font-size: 15px }
+.strip { margin-top: 24px; background: var(--parchment); border: 1px solid var(--grid); padding: 18px 22px }
+.strip-list { margin-top: 12px; display: grid; gap: 10px; font-size: 15px }
+.strip-list li { display: grid; grid-template-columns: 11.5em auto 1fr; gap: 16px; align-items: baseline }
+.strip-list .status-chip { justify-self: start }
 .strip .ledger-label { color: var(--ink) }
 
 /* Filters: the buttons are the site's .chip; these lay them out */
+/* Without JavaScript the buttons would do nothing, so they are not shown; the full table still is */
+html:not(.js) [data-filters] { display: none }
 .filters { margin-top: 28px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px }
 .filters-group { display: flex; flex-wrap: wrap; gap: 8px }
 .filters-select { display: inline-flex; align-items: center; gap: 8px; font-family: 'Space Mono', monospace; font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: var(--slate) }
@@ -124,6 +130,8 @@
   .calls td[data-label]:not([data-label="Call"])::before { content: attr(data-label); display: block; margin-bottom: 4px;
     font-family: 'Space Mono', monospace; font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--slate) }
   .calls-empty td { grid-column: 1 / -1 }
+  .strip-list li { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 16px }
+  .strip-list .status-chip { grid-column: 1 / -1 }
   .facts { column-gap: 16px }
   .ledger-updates li { grid-template-columns: minmax(0, 1fr); gap: 2px }
 }
