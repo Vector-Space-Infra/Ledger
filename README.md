@@ -45,12 +45,22 @@ Example files (`calls/_example.md`, `theses/_template.md`, `prior/_template.md`)
 
 - **This repo:** `.github/workflows/deploy.yml` validates every push and, on `main`, POSTs to the site Worker's deploy hook
   (Workers & Pages → vectorspaceinfrasite → Settings → Builds → Deploy Hooks), stored in the repository secret `CF_DEPLOY_HOOK`.
-- **Site repo** (`Vector-Space-Infra/vectorspaceinfrasite`, a Worker with static assets): its Workers Builds build command runs
-  `cloudflare-build.sh` (copy it there), which clones this repo with full history and renders `/ledger/` into the assets
-  directory; the deploy command stays `npx wrangler deploy`. Validation failure = no deploy.
+- **Site repo** (`Vector-Space-Infra/vectorspaceinfrasite`, a Worker with static assets): its Workers Builds build command is
+  `bash cloudflare-build.sh`, a script in the site repo (adapted from the starter's copy, which did not build the site and
+  wrote to the wrong folder, so it was removed from here). It builds the site into
+  `_site`, clones this repo with full history, validates, scores and renders `/ledger/` into `_site/ledger`; the deploy
+  command stays `npx wrangler deploy`. Validation failure = the build fails = no deploy, and the live site stays as it was.
 - **After each deploy:** `python scripts/archive.py --commit` then push. It archives the index plus the calls changed in the
-  last commit; `--all` for everything, `--dry-run` to see what it would do.
-- Templates: `templates/base.html` carries the site chrome; replace its stub nav, footer and stylesheet links with the site's own.
-  `static/ledger.css` has the ledger-only styles; `build.py` has `SERVICE_URLS` for the related-service links.
+  last commit; `--all` for everything, `--dry-run` to see what it would do. Its commit carries `[skip ci]`, so the archive
+  link appears on the call page at the next deploy.
+- **Templates:** `templates/base.html` is the site's own head, header and footer (built from the site's About page on
+  15 Oct 2026, with Calls current in the nav). When the site's nav, footer, fonts or analytics tags change, make the same
+  change here, or the ledger pages fall out of step with the rest of the site.
+  `static/ledger.css` holds only what the ledger adds; colours, type, header, footer and the filter buttons come from the
+  site's `/assets/css/site.css`. The status chips are `.status-chip` (the site already uses `.chip`). `build.py` has
+  `SERVICE_URLS`, the related-service links, keyed by the exact service names on the Services page.
+- **Repository settings:** protect `main` (Settings → Branches: block force pushes and deletion). The immutability checks
+  read git history, so rewritten history is the one change they cannot see.
 
+Deleting a call file fails validation (`file: was published in … and deleted in …`); void or retract it instead.
 Never rebase, squash or force-push `main`, and never delete a call file.
