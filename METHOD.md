@@ -1,6 +1,6 @@
 # How this ledger works
 
-**DRAFT — Nova to tidy, Makho to approve before it goes live.** This page is rendered at `/ledger/method/`. The rules below are the Page Spec's rules in plain language.
+**DRAFT: waiting for Makho's approval before it goes live.** This page is rendered at `/ledger/method/`. The rules below are the Page Spec's rules in plain language.
 
 ## What the ledger is
 
@@ -12,7 +12,7 @@ A call is a specific, falsifiable statement about the data center market with a 
 
 ## How a call is timestamped
 
-Each call is one file in a public repository. The commit that adds the file is the publication: the commit date is the call's date, and the commit is signed by the author's account. After the page is published it is saved to the Internet Archive's Wayback Machine, and the archived copy is linked from the call. The build that produces this site refuses to publish if any frozen field of a published call has changed since its first commit. A correction is a new call that names the one it supersedes; the original stays and resolves on its own terms.
+Each call is one file in a public repository. The commit that adds the file is the publication: the commit date is the call's date, and the commit is made from the author's own GitHub account. After the page is published it is saved to the Internet Archive's Wayback Machine, and the archived copy is linked from the call. The build that produces this site refuses to publish if any frozen field of a published call has changed since its first commit. A correction is a new call that names the one it supersedes; the original stays and resolves on its own terms.
 
 ## Statuses
 
@@ -20,7 +20,7 @@ Each call is one file in a public repository. The commit that adds the file is t
 - **Flagged.** An indicator or an event has moved against the call. We flag within 14 days of noticing. The claim and the confidence do not change.
 - **Resolved YES / NO.** Set on, or within 14 days after, the resolution date, by applying the resolution rule to the named source. The resolving page is archived and linked.
 - **Void.** The named source no longer exists, or the claim proved ambiguous as written. Voids are listed and counted, never deleted. If more than 10% of calls are void, the page says so.
-- **Retracted.** Withdrawn by the author before resolution. A retraction scores as a miss at the stated confidence, so it is a miss declared early, not a free exit.
+- **Retracted.** Withdrawn by the author before resolution. A retraction is scored as if the call resolved NO, at its stated confidence, and stays on the page.
 
 ## How calls are scored
 
