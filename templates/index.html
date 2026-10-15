@@ -26,6 +26,7 @@
 </section>
 {% endif %}
 
+{% if calls %}
 <div class="filters" data-filters>
   <div class="filters-group" role="group" aria-label="Filter by status">
     <button class="chip" type="button" data-filter="status" data-value="" aria-pressed="true">All</button>
@@ -49,6 +50,7 @@
   </label>
   {% endif %}
 </div>
+{% endif %}
 
 <table class="calls" data-calls>
   <thead>
