@@ -12,7 +12,7 @@ A call is a specific, falsifiable statement about the data center market with a 
 
 ## How a call is timestamped
 
-Each call is one file in a public repository. The commit that adds the file is the publication: the commit date is the call's date, and the commit is made from the author's own GitHub account. After the page is published it is saved to the Internet Archive's Wayback Machine, and the archived copy is linked from the call. The build that produces this site refuses to publish if any frozen field of a published call has changed since its first commit. A correction is a new call that names the one it supersedes; the original stays and resolves on its own terms.
+Each call is one file in a public repository. The first commit in which the call passes every check is the publication: that commit's date is the call's date, and the commit is made from the author's own GitHub account. After the page is published it is saved to the Internet Archive's Wayback Machine, and the archived copy is linked from the call. The build that produces this site refuses to publish if any frozen field of a published call has changed since it was published. A correction is a new call that names the one it supersedes; the original stays and resolves on its own terms.
 
 ## Statuses
 

@@ -83,7 +83,14 @@ def split_front_matter(text: str) -> tuple[dict, str, str]:
     m = re.match(r"^---[ \t]*\r?\n(.*?)\r?\n---[ \t]*(?:\r?\n|$)(.*)$", text, re.S)
     if not m:
         raise ValueError("front matter block is not closed with '---'")
-    meta = yaml.safe_load(m.group(1)) or {}
+    try:
+        meta = yaml.safe_load(m.group(1)) or {}
+    except yaml.YAMLError as e:
+        mark = getattr(e, "problem_mark", None)
+        where = f"line {mark.line + 2}" if mark else "the front matter"  # +2: the opening '---' is line 1
+        problem = getattr(e, "problem", None) or "not valid YAML"
+        raise ValueError(f"cannot be read at {where} ({problem}). Text with a colon followed by a space, "
+                         "or starting with a quote or #, must be wrapped in double quotes") from None
     if not isinstance(meta, dict):
         raise ValueError("front matter is not a key: value mapping")
     return meta, m.group(2), m.group(1)

@@ -30,6 +30,7 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import ledgerlib as L  # noqa: E402
 import score as scoremod  # noqa: E402
+import validate  # noqa: E402
 
 # Each service name, as written in a call's `service` field, mapped to its section on the site's
 # Services page (ids from the site's src/_data/services.json). Unknown names link to /services/.
@@ -75,7 +76,8 @@ def call_context(call: L.Call, root: pathlib.Path, scores: dict, use_git: bool,
         latest = next((u for u in updates if u["indicator"] == i), None)  # updates are newest first
         indicators.append({"n": i, "what": ind.get("what", ""), "cadence": ind.get("cadence", ""), "latest": latest})
     wayback = next((u["url"] for u in updates if str(u.get("url", "")).startswith("https://web.archive.org/")), None)
-    first = L.first_commit(root, call.rel) if use_git else None
+    pub = validate.publication(root, call) if use_git else None  # (index, sha, date)
+    first = pub[1:] if pub else None
     conf = m.get("confidence")
     return {
         "id": call.id,

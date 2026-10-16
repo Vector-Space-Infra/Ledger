@@ -5,13 +5,17 @@ One Markdown file per call; the site is built from this repository, so the page 
 
 ## Adding a call (Makho)
 
-1. Copy `calls/_example.md` to `calls/FCB-YYYY-NNN.md` using the next number for the year.
-2. Fill in every field. `made_on` is today; `confidence` is a whole percent in steps of 5.
-3. Check it: `python scripts/validate.py`
-4. Commit with the message `FCB-YYYY-NNN: <title>` and push to `main`.
-5. It is live at `/ledger/FCB-YYYY-NNN/` in about three minutes. If the Action fails, its log names the field.
+All in the browser on github.com; nothing to install.
 
-Published calls are frozen: the build refuses any change to `id`, `title`, `claim`, `made_on`, `resolves_on`,
+1. Open `calls/_example.md` and click the copy icon above the text.
+2. In `calls/`, choose **Add file → Create new file**. Name it `FCB-2026-NNN.md`, the next number for the year.
+3. Paste, then replace every value. `id` matches the file name; `made_on` is today; `confidence` is a whole percent in steps of 5.
+4. **Commit changes**, message `FCB-2026-NNN: <title>`, **Commit directly to the main branch**.
+5. Open **Actions**. A green tick means the call is live at `/ledger/FCB-2026-NNN/` in about three minutes. A red cross
+   means it did not publish: open the run, read the `ERROR` line (file and field), fix the file (pencil icon) and commit again.
+
+A call is published by its first commit that passes every check; commits before that never deployed and can be
+fixed freely. Published calls are frozen: the build refuses any change to `id`, `title`, `claim`, `made_on`, `resolves_on`,
 `resolution_rule`, `confidence`, `consensus_at_time`, `thesis`, `leading_indicators`, `changes_my_mind`,
 `implies_for` or `supersedes`. To correct one, add a new call with `supersedes: <old id>`.
 `status`, `service` and `updates` (append at the top, newest first) can change; `outcome`, `score` and

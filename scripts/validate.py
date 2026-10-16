@@ -181,7 +181,55 @@ def check_schema(call: L.Call, all_ids: set[str], root: pathlib.Path, today: dt.
     return errs, warns
 
 
-def check_git(call: L.Call, root: pathlib.Path) -> tuple[list[str], list[str]]:
+def version_at(root: pathlib.Path, call: L.Call, sha: str) -> L.Call | None:
+    """The call as it stood in commit `sha`, or None if it was missing or unreadable there."""
+    text = L.file_at(root, sha, call.rel)
+    if text is None:
+        return None
+    try:
+        meta, body, _ = L.split_front_matter(text)
+    except ValueError:
+        return None
+    return L.Call(path=call.path, rel=call.rel, id=call.id, meta=meta, body=body, raw=text)
+
+
+def publication(root: pathlib.Path, call: L.Call, all_ids: set[str] | None = None) -> tuple[int, str, str] | None:
+    """The commit that published the call: the first commit in which the file passed every check and its
+    made_on equalled that commit's date. Earlier saves failed validation, so they never deployed; they are
+    drafts and can be fixed. From the publication commit on, the frozen fields are frozen.
+    Returns (index in the file's history, sha, date YYYY-MM-DD), or None if no save has passed yet."""
+    if all_ids is None:
+        all_ids = {p.stem for p in L.call_paths(root)}
+    for i, (sha, date) in enumerate(L.history(root, call.rel)):
+        v = version_at(root, call, sha)
+        if v is None:
+            continue
+        errs, _ = check_schema(v, all_ids, root, L.to_date(date))
+        if not errs and L.is_date(v.meta.get("made_on")) and L.to_date(v.meta["made_on"]).isoformat() == date:
+            return i, sha, date
+    return None
+
+
+def transition_errors(prev_meta: dict, cur_meta: dict, pshort: str) -> list[str]:
+    """What may not change between a deployed version (prev) and a later one: the updates log only grows at
+    the top, set-once fields stay as set, and a resolved call keeps its status."""
+    errs: list[str] = []
+    prev_u = L.normalize(prev_meta.get("updates") or [])
+    cur_u = L.normalize(cur_meta.get("updates") or [])
+    if len(cur_u) < len(prev_u) or cur_u[len(cur_u) - len(prev_u):] != prev_u:
+        errs.append(f"updates: entries from {pshort} were changed or removed; the log is append-only "
+                    "(add new entries at the top, never edit old ones)")
+    for f in L.SET_ONCE:
+        if prev_meta.get(f) not in (None, "", []) and L.normalize(prev_meta.get(f)) != L.normalize(cur_meta.get(f)):
+            errs.append(f"{f}: was set in {pshort} and is set once; it cannot change")
+    prev_status = str(prev_meta.get("status", "")).strip()
+    cur_status = str(cur_meta.get("status", "")).strip()
+    if prev_status in L.RESOLVED_STATUSES and cur_status != prev_status:
+        errs.append(f"status: was {prev_status} in {pshort}; a resolved call cannot change status")
+    return errs
+
+
+def check_git(call: L.Call, root: pathlib.Path, all_ids: set[str], today: dt.date) -> tuple[list[str], list[str]]:
     """Immutability checks against the file's own history. Returns (errors, warnings)."""
     errs: list[str] = []
     warns: list[str] = []
@@ -193,67 +241,63 @@ def check_git(call: L.Call, root: pathlib.Path) -> tuple[list[str], list[str]]:
     if not hist:
         warns.append("no history found; first-commit checks skipped")
         return errs, warns
-    first_sha, first_date = hist[0]
+    pub = publication(root, call, all_ids)
+    if pub is None:
+        # No save has passed every check, so the call never deployed: it is a draft and nothing is frozen.
+        # made_on has to be the date of the save that will publish it.
+        due = today.isoformat() if L.working_tree_differs(root, call.rel) else hist[-1][1]
+        if L.is_date(call.meta.get("made_on")) and L.to_date(call.meta["made_on"]).isoformat() != due:
+            errs.append(f"made_on: is {L.to_date(call.meta['made_on'])}, but the latest save is dated {due}. "
+                        "This call is not published yet, so made_on must be the date of the save that publishes "
+                        "it: set it to the date you save the fix")
+        return errs, warns
+    pub_i, first_sha, first_date = pub
     short = first_sha[:7]
 
-    # made_on must equal the first commit's date
+    # made_on must equal the publication commit's date
     date_mismatch = False
     if L.is_date(call.meta.get("made_on")) and L.to_date(call.meta["made_on"]).isoformat() != first_date:
         date_mismatch = True
-        errs.append(f"made_on: is {L.to_date(call.meta['made_on'])}, but the file was first committed on "
+        errs.append(f"made_on: is {L.to_date(call.meta['made_on'])}, but the call was published on "
                     f"{first_date} ({short}); the commit date wins")
 
-    # frozen fields must equal their first-commit values
+    # frozen fields must equal their published values
     first_text = L.file_at(root, first_sha, call.rel)
     try:
         first_meta, _, _ = L.split_front_matter(first_text or "")
     except ValueError as e:
-        errs.append(f"first commit {short} could not be parsed: {e}")
+        errs.append(f"published version {short} could not be parsed: {e}")
         first_meta = None
     if first_meta is not None:
         for f in L.FROZEN:
             if f == "made_on" and date_mismatch:
                 continue
             if L.normalize(call.meta.get(f)) != L.normalize(first_meta.get(f)):
-                errs.append(f"{f}: differs from the first commit ({short}); published calls are frozen. "
+                errs.append(f"{f}: differs from the published version ({short}); published calls are frozen. "
                             f"To correct it, add a new call with supersedes: {call.id}")
 
-    # previous version: the working tree vs HEAD if dirty, else HEAD vs the commit before it
-    if L.working_tree_differs(root, call.rel):
-        prev_sha = hist[-1][0]
-    elif len(hist) >= 2:
-        prev_sha = hist[-2][0]
-    else:
-        prev_sha = None
-    if prev_sha:
-        prev_text = L.file_at(root, prev_sha, call.rel)
-        try:
-            prev_meta, _, _ = L.split_front_matter(prev_text or "")
-        except ValueError:
-            prev_meta = None
-        if prev_meta is not None:
-            pshort = prev_sha[:7]
-            # updates is append-only, newest first: the old list must be the tail of the new one
-            prev_u = L.normalize(prev_meta.get("updates") or [])
-            cur_u = L.normalize(call.meta.get("updates") or [])
-            if len(cur_u) < len(prev_u) or cur_u[len(cur_u) - len(prev_u):] != prev_u:
-                errs.append(f"updates: entries from {pshort} were changed or removed; the log is append-only "
-                            "(add new entries at the top, never edit old ones)")
-            # set-once fields
-            for f in L.SET_ONCE:
-                if prev_meta.get(f) not in (None, "", []) and \
-                        L.normalize(prev_meta.get(f)) != L.normalize(call.meta.get(f)):
-                    errs.append(f"{f}: was set in {pshort} and is set once; it cannot change")
-            # a resolved call stays resolved, with the same status
-            prev_status = str(prev_meta.get("status", "")).strip()
-            if prev_status in L.RESOLVED_STATUSES and call.status != prev_status:
-                errs.append(f"status: was {prev_status} in {pshort}; a resolved call cannot change status")
+    # Append-only and set-once rules. Walk the saves since publication: a save that failed any check never
+    # deployed, so it is skipped, and the current file is compared with the last save that passed. Comparing
+    # only with the save just before would let a bad edit through on the next, unrelated save.
+    last_meta, last_sha = first_meta or {}, first_sha
+    end = len(hist) if L.working_tree_differs(root, call.rel) else len(hist) - 1
+    for k in range(pub_i + 1, end):
+        sha, date = hist[k]
+        v = version_at(root, call, sha)
+        if v is None:
+            continue
+        v_errs, _ = check_schema(v, all_ids, root, L.to_date(date))
+        frozen_ok = first_meta is not None and all(
+            L.normalize(v.meta.get(f)) == L.normalize(first_meta.get(f)) for f in L.FROZEN)
+        if not v_errs and frozen_ok and not transition_errors(last_meta, v.meta, sha[:7]):
+            last_meta, last_sha = v.meta, sha
+    errs += transition_errors(last_meta, call.meta, last_sha[:7])
     return errs, warns
 
 
-def check_deleted(root: pathlib.Path) -> list[str]:
-    """Every call ever committed must still exist. Deleting one would drop a miss from the scores.
-    Returns full ERROR lines."""
+def check_deleted(root: pathlib.Path, all_ids: set[str], today: dt.date) -> list[str]:
+    """Every call ever published must still exist. Deleting one would drop a miss from the scores.
+    A draft that never passed validation never deployed, so it may be deleted. Returns full ERROR lines."""
     errs: list[str] = []
     out = L.git(root, "log", "--no-renames", "--diff-filter=A", "--format=@%h", "--name-only", "--", "calls/")
     added: dict[str, str] = {}
@@ -266,6 +310,10 @@ def check_deleted(root: pathlib.Path) -> list[str]:
             added[line] = sha  # log is newest first, so this ends on the first add
     for rel, add_sha in sorted(added.items()):
         if (root / rel).is_file():
+            continue
+        p = root / rel
+        ghost = L.Call(path=p, rel=rel, id=p.stem, meta={}, body="", raw="")
+        if publication(root, ghost, all_ids) is None:
             continue
         gone = L.git(root, "log", "-1", "--no-renames", "--diff-filter=D", "--format=%h", "--", rel, check=False)
         where = f"deleted in {gone}" if gone else "deleted in the working tree"
@@ -287,7 +335,7 @@ def main(argv: list[str] | None = None) -> int:
     today = dt.date.today()
     paths = L.call_paths(root, include_examples=args.check_examples)
     if not paths:
-        gone = check_deleted(root) if not args.no_git and L.is_git_repo(root) else []
+        gone = check_deleted(root, set(), today) if not args.no_git and L.is_git_repo(root) else []
         for e in gone:
             print(e)
         if gone:
@@ -314,7 +362,7 @@ def main(argv: list[str] | None = None) -> int:
     for c in calls:
         errs, warns = check_schema(c, all_ids, root, today)
         if use_git and not c.is_example:
-            e2, w2 = check_git(c, root)
+            e2, w2 = check_git(c, root, all_ids, today)
             errs += e2
             warns += w2
         if not c.is_example:
@@ -326,7 +374,7 @@ def main(argv: list[str] | None = None) -> int:
         warnings += [f"WARN {c.rel}: {w}" for w in warns]
 
     if use_git:
-        errors += check_deleted(root)
+        errors += check_deleted(root, all_ids, today)
 
     if not args.quiet:
         for w in warnings:
