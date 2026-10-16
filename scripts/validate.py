@@ -381,7 +381,7 @@ def main(argv: list[str] | None = None) -> int:
             print(w)
     for e in errors:
         print(e)
-    n = len([c for c in calls if not c.is_example])
+    n = len([p for p in paths if not p.name.startswith("_")])  # counts files that could not be read, too
     if errors:
         print(f"\n{len(errors)} error(s) in {n} call(s). The deploy is blocked until they are fixed.")
         return 1
