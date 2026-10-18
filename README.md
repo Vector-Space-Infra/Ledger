@@ -49,11 +49,10 @@ Example files (`calls/_example.md`, `theses/_template.md`, `prior/_template.md`)
 
 - **This repo:** `.github/workflows/deploy.yml` validates every push and, on `main`, POSTs to the site Worker's deploy hook
   (Workers & Pages → vectorspaceinfrasite → Settings → Builds → Deploy Hooks), stored in the repository secret `CF_DEPLOY_HOOK`.
-- **Site repo** (`Vector-Space-Infra/vectorspaceinfrasite`, a Worker with static assets): its Workers Builds build command is
-  `bash cloudflare-build.sh`, a script in the site repo (adapted from the starter's copy, which did not build the site and
-  wrote to the wrong folder, so it was removed from here). It builds the site into
-  `_site`, clones this repo with full history, validates, scores and renders `/ledger/` into `_site/ledger`; the deploy
-  command stays `npx wrangler deploy`. Validation failure = the build fails = no deploy, and the live site stays as it was.
+- **Site repo** (`Vector-Space-Infra/vectorspaceinfrasite`, a Worker with static assets): its build command stays
+  `npm run build`, and the site's `package.json` runs `tools/ledger.sh` after it (the `postbuild` script). That script
+  clones this repo with full history, validates, scores and renders `/ledger/` into `_site/ledger`. Validation
+  failure = the build fails = no deploy, and the live site stays as it was. No Cloudflare setting had to change.
 - **After each deploy:** `python scripts/archive.py --commit` then push. It archives the index plus the calls changed in the
   last commit; `--all` for everything, `--dry-run` to see what it would do. Its commit carries `[skip ci]`, so the archive
   link appears on the call page at the next deploy.
