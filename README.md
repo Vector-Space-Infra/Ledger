@@ -53,9 +53,11 @@ Example files (`calls/_example.md`, `theses/_template.md`, `prior/_template.md`)
   `npm run build`, and the site's `package.json` runs `tools/ledger.sh` after it (the `postbuild` script). That script
   clones this repo with full history, validates, scores and renders `/ledger/` into `_site/ledger`. Validation
   failure = the build fails = no deploy, and the live site stays as it was. No Cloudflare setting had to change.
-- **After each deploy:** `python scripts/archive.py --commit` then push. It archives the index plus the calls changed in the
-  last commit; `--all` for everything, `--dry-run` to see what it would do. Its commit carries `[skip ci]`, so the archive
-  link appears on the call page at the next deploy.
+- **After each deploy:** automatic. When a push changes a call, the workflow waits until the live call page matches
+  the push, saves it and the ledger index to the Wayback Machine, commits the links (`archive: … [skip ci]`) and
+  rebuilds the site. If that step fails (the Wayback Machine is often slow), open the run in Actions and click
+  **Re-run failed jobs**. By hand instead: `python scripts/archive.py --commit`, push; the links appear at the next
+  deploy. To test the step without saving anything: Actions → Validate and deploy → **Run workflow**.
 - **Templates:** `templates/base.html` is the site's own head, header and footer (built from the site's About page on
   15 Oct 2026, with Calls current in the nav). When the site's nav, footer, fonts or analytics tags change, make the same
   change here, or the ledger pages fall out of step with the rest of the site.

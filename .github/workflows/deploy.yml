@@ -1,13 +1,26 @@
-# Validates every push and pull request. On a push to main that passes, asks Cloudflare to rebuild the
-# site Worker (vectorspaceinfrasite); the site's build clones this repository and renders /ledger/.
+# Validates every push and pull request. On a push to main that passes:
+#   1. asks Cloudflare to rebuild the site Worker (vectorspaceinfrasite); the site's build clones this
+#      repository and renders /ledger/;
+#   2. if the push changed any call, waits until the live call pages match this commit's build, saves them
+#      and the ledger index to the Wayback Machine (scripts/archive.py), commits the archive links into the
+#      calls' updates as "archive: ... [skip ci]", pushes, and asks Cloudflare to rebuild once more so the
+#      links reach the site.
 # Repository secret required: CF_DEPLOY_HOOK = the Worker's Deploy Hook URL
 # (Workers & Pages > vectorspaceinfrasite > Settings > Builds > Deploy Hooks, branch main).
+# Run it by hand (Actions > Validate and deploy > Run workflow) to test the archive step without saving
+# anything: no Wayback request, no commit, no rebuild.
 name: Validate and deploy
 
 on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+
+# One run at a time on main, in order, so two quick pushes never race to push archive commits
+concurrency:
+  group: ledger-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   validate:
@@ -15,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0          # full history: the immutability check reads each file's first commit
+          fetch-depth: 0          # full history: the immutability checks read each file's history
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -29,12 +42,91 @@ jobs:
 
   deploy:
     needs: validate
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write             # to push the archive commit
+    env:
+      CF_DEPLOY_HOOK: ${{ secrets.CF_DEPLOY_HOOK }}
+      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' }}
     steps:
       - name: Trigger the site rebuild on Cloudflare
-        env:
-          CF_DEPLOY_HOOK: ${{ secrets.CF_DEPLOY_HOOK }}
+        if: github.event_name == 'push'
         run: |
           if [ -z "$CF_DEPLOY_HOOK" ]; then echo "CF_DEPLOY_HOOK secret is not set"; exit 1; fi
           curl -fsS -X POST "$CF_DEPLOY_HOOK"
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Calls changed by this push
+        id: changed
+        env:
+          BEFORE: ${{ github.event.before }}
+          HEAD_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          python3 - <<'PY'
+          import os, pathlib, subprocess
+
+          def all_calls():
+              return sorted(p.stem for p in pathlib.Path("calls").glob("*.md") if not p.name.startswith("_"))
+
+          def diff(*refs):
+              r = subprocess.run(["git", "diff", "--name-only", *refs, "--", "calls/"], capture_output=True, text=True)
+              return r.stdout.split() if r.returncode == 0 else None
+
+          before = os.environ.get("BEFORE", "")
+          if os.environ["DRY_RUN"] == "true":
+              ids = all_calls()
+          elif os.environ.get("HEAD_MESSAGE", "").startswith("archive:"):
+              ids = []                                   # an archive commit: nothing new to archive
+          elif not before or set(before) == {"0"}:
+              ids = all_calls()
+          else:
+              files = diff(before, os.environ["GITHUB_SHA"]) or diff("HEAD~1", "HEAD") or []
+              ids = sorted({pathlib.Path(f).stem for f in files
+                            if f.endswith(".md") and not pathlib.Path(f).name.startswith("_") and pathlib.Path(f).exists()})
+          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+              out.write(f"ids={' '.join(ids)}\n")
+          print("calls to archive:", " ".join(ids) or "none")
+          PY
+
+      - uses: actions/setup-python@v5
+        if: steps.changed.outputs.ids != '' || env.DRY_RUN == 'true'
+        with:
+          python-version: "3.12"
+
+      - name: Wait for the site to serve this version
+        if: steps.changed.outputs.ids != '' || env.DRY_RUN == 'true'
+        env:
+          IDS: ${{ steps.changed.outputs.ids }}
+        run: |
+          pip install -r requirements.txt
+          python scripts/build.py --out _built/ledger
+          # Compare the call pages; with no calls, the index (it only differs by date near midnight)
+          paths="/ledger/"
+          if [ -n "$IDS" ]; then paths=""; for id in $IDS; do paths="$paths /ledger/$id/"; done; fi
+          python scripts/wait_for_deploy.py --built _built --paths $paths --timeout 600
+
+      - name: Save to the Wayback Machine and record the links
+        if: steps.changed.outputs.ids != '' || env.DRY_RUN == 'true'
+        env:
+          IDS: ${{ steps.changed.outputs.ids }}
+        run: |
+          if [ "$DRY_RUN" = "true" ]; then
+            python scripts/archive.py --all --dry-run
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python scripts/archive.py --calls $IDS --commit
+          python scripts/validate.py --quiet
+          if ! git push origin HEAD:main; then
+            # someone pushed meanwhile: put the archive commit on top of theirs and check again
+            git pull --rebase origin main && python scripts/validate.py --quiet && git push origin HEAD:main
+          fi
+
+      - name: Rebuild the site so the archive links appear
+        if: steps.changed.outputs.ids != '' && env.DRY_RUN != 'true'
+        run: curl -fsS -X POST "$CF_DEPLOY_HOOK"

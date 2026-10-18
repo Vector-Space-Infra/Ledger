@@ -204,7 +204,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.commit and touched and not args.dry_run:
         names = ", ".join(sorted({p.stem for p in touched if p.parent.name == "calls"})) or "index"
         L.git(root, "add", *[str(p.relative_to(root)) for p in touched])
-        L.git(root, "commit", "-m", f"archive: {names} ({today})")
+        # "[skip ci]": the push starts no workflow run of its own (the deploy workflow rebuilds the site itself)
+        L.git(root, "commit", "-m", f"archive: {names} ({today}) [skip ci]")
         print(f"committed; push when ready")
     if failures:
         print(f"{failures} page(s) not archived; rerun with --calls for those ids")
