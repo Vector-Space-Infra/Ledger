@@ -186,7 +186,7 @@ def main(argv: list[str] | None = None) -> int:
             continue
         if cid:
             f = root / "calls" / f"{cid}.md"
-            new_text = add_update(f.read_text(encoding="utf-8"), today, f"Archived call page {path}", archive)
+            new_text = add_update(f.read_text(encoding="utf-8"), today, "Saved to the Internet Archive", archive)
             if args.dry_run:
                 print(f"  (dry run) would add an updates entry to {f.relative_to(root)}")
             else:

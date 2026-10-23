@@ -12,7 +12,7 @@
   <div class="headline-item"><span class="headline-num">{% if scores.brier is not none %}{{ "%.3f"|format(scores.brier) }}{% else %}&mdash;{% endif %}</span><span class="headline-label">Brier score</span><span class="headline-n">N={{ scores.brier_n }}</span></div>
 </div>
 {% if scores.void_flag %}
-<p class="ledger-notice">Void rate is {{ "%.0f"|format(scores.void_rate * 100) }}% of calls made, above the 10% the ledger allows itself. Read the postmortems.</p>
+<p class="ledger-notice">Void rate is {{ "%.0f"|format(scores.void_rate * 100) }}% of calls made, above the 10% the ledger allows itself.</p>
 {% endif %}
 
 {% if strip and strip.calls %}

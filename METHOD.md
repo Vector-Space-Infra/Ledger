@@ -1,7 +1,5 @@
 # How this ledger works
 
-**DRAFT: waiting for Makho's approval before it goes live.** This page is rendered at `/ledger/method/`. The rules below are the Page Spec's rules in plain language.
-
 ## What the ledger is
 
 A public, dated, scored record of VectorSpace Infrastructure's forecasts about the data center market. It exists so that someone with capital at stake can check our judgment without taking anyone's word for it. Every call is written by the author, in the author's words, and frozen on the day it is published.
@@ -29,7 +27,3 @@ Each call carries a stated probability that it resolves YES, in 5-point steps. A
 ## What a call page shows
 
 The claim; the dates, confidence and status; the commit and archive links; what the consensus view was when the call was made, with sources; the resolution rule; the leading indicators we watch and their latest readings; what evidence would change our mind; who the call matters to and which of our services it relates to; the log of updates; and, once resolved, what happened and a short postmortem.
-
-## Prior calls
-
-Calls the author made before this ledger existed are listed separately, with the dated public post that made each one. They are scored on their own and never pooled with this page, because the selection process was different: this page records every call made; the prior page records the ones the author could document after the fact.
