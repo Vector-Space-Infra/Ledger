@@ -1,14 +1,16 @@
 # Validates every push and pull request. On a push to main that passes:
-#   1. asks Cloudflare to rebuild the site Worker (vectorspaceinfrasite); the site's build clones this
-#      repository and renders /ledger/;
+#   1. pins this commit in the site repository (scripts/pin_site.sh): commits its hash to ledger.lock in
+#      vectorspaceinfrasite, an ordinary push that makes Cloudflare rebuild the site, whose build then
+#      renders exactly this ledger commit into /ledger/;
 #   2. if the push changed any call, waits until the live call pages match this commit's build, saves them
 #      and the ledger index to the Wayback Machine (scripts/archive.py), commits the archive links into the
-#      calls' updates as "archive: ... [skip ci]", pushes, and asks Cloudflare to rebuild once more so the
+#      calls' updates as "archive: ... [skip ci]", pushes, and pins that archive commit the same way so the
 #      links reach the site.
-# Repository secret required: CF_DEPLOY_HOOK = the Worker's Deploy Hook URL
-# (Workers & Pages > vectorspaceinfrasite > Settings > Builds > Deploy Hooks, branch main).
+# Repository secret required: SITE_REPO_TOKEN = a fine-grained GitHub token with Contents read/write on
+# Vector-Space-Infra/vectorspaceinfrasite only. (The Cloudflare deploy hook is no longer used: its builds
+# were accepted but often not run for an unchanged site repository.)
 # Run it by hand (Actions > Validate and deploy > Run workflow) to test the archive step without saving
-# anything: no Wayback request, no commit, no rebuild.
+# anything: no Wayback request, no commit, no pin.
 name: Validate and deploy
 
 on:
@@ -47,18 +49,16 @@ jobs:
     permissions:
       contents: write             # to push the archive commit
     env:
-      CF_DEPLOY_HOOK: ${{ secrets.CF_DEPLOY_HOOK }}
+      SITE_REPO_TOKEN: ${{ secrets.SITE_REPO_TOKEN }}
       DRY_RUN: ${{ github.event_name == 'workflow_dispatch' }}
     steps:
-      - name: Trigger the site rebuild on Cloudflare
-        if: github.event_name == 'push'
-        run: |
-          if [ -z "$CF_DEPLOY_HOOK" ]; then echo "CF_DEPLOY_HOOK secret is not set"; exit 1; fi
-          curl -fsS -X POST "$CF_DEPLOY_HOOK"
-
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Pin this ledger commit in the site repo
+        if: github.event_name == 'push'
+        run: bash scripts/pin_site.sh "$GITHUB_SHA"
 
       - name: Calls changed by this push
         id: changed
@@ -127,6 +127,6 @@ jobs:
             git pull --rebase origin main && python scripts/validate.py --quiet && git push origin HEAD:main
           fi
 
-      - name: Rebuild the site so the archive links appear
+      - name: Pin the archive commit in the site repo, so the archive links appear
         if: steps.changed.outputs.ids != '' && env.DRY_RUN != 'true'
-        run: curl -fsS -X POST "$CF_DEPLOY_HOOK"
+        run: bash scripts/pin_site.sh "$(git rev-parse HEAD)"

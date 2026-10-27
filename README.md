@@ -47,15 +47,20 @@ Example files (`calls/_example.md`, `theses/_template.md`, `prior/_template.md`)
 
 ## Deployment (Nova)
 
-- **This repo:** `.github/workflows/deploy.yml` validates every push and, on `main`, POSTs to the site Worker's deploy hook
-  (Workers & Pages → vectorspaceinfrasite → Settings → Builds → Deploy Hooks), stored in the repository secret `CF_DEPLOY_HOOK`.
+- **This repo:** `.github/workflows/deploy.yml` validates every push and, on `main`, pins the commit in the site repo:
+  `scripts/pin_site.sh` commits its hash to `ledger.lock` there ("Ledger: pin abc1234"), and that ordinary push is what
+  rebuilds the site. It needs the repository secret `SITE_REPO_TOKEN`, a fine-grained GitHub token with Contents
+  read/write on `Vector-Space-Infra/vectorspaceinfrasite` only. When the token expires, pins fail with a red run: renew it
+  and re-run the failed job. A pin never moves backwards to an older commit. (Until 27 Oct this step asked a Cloudflare
+  deploy hook to rebuild instead; Cloudflare accepted those requests but often did not build an unchanged repository.)
 - **Site repo** (`Vector-Space-Infra/vectorspaceinfrasite`, a Worker with static assets): its build command stays
   `npm run build`, and the site's `package.json` runs `tools/ledger.sh` after it (the `postbuild` script). That script
-  clones this repo with full history, validates, scores and renders `/ledger/` into `_site/ledger`. Validation
+  clones this repo with full history, checks out the commit named in the site's `ledger.lock` (this repo's `main` if there
+  is none), validates, scores and renders `/ledger/` into `_site/ledger`. Validation
   failure = the build fails = no deploy, and the live site stays as it was. No Cloudflare setting had to change.
 - **After each deploy:** automatic. When a push changes a call, the workflow waits until the live call page matches
   the push, saves it and the ledger index to the Wayback Machine, commits the links (`archive: … [skip ci]`) and
-  rebuilds the site. If that step fails (the Wayback Machine is often slow), open the run in Actions and click
+  pins that commit in the site repo too. If that step fails (the Wayback Machine is often slow), open the run in Actions and click
   **Re-run failed jobs**. By hand instead: `python scripts/archive.py --commit`, push; the links appear at the next
   deploy. To test the step without saving anything: Actions → Validate and deploy → **Run workflow**.
 - **Templates:** `templates/base.html` is the site's own head, header and footer (built from the site's About page on
