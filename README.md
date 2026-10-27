@@ -68,4 +68,4 @@ Example files (`calls/_example.md`, `theses/_template.md`, `prior/_template.md`)
   read git history, so rewritten history is the one change they cannot see.
 
 Deleting a call file fails validation (`file: was published in … and deleted in …`); void or retract it instead.
-Never rebase, squash or force-push `main`, and never delete a call file.
+Never rebase, squash or force-push `main`, and never delete a call file. Make sure to update the ledger process.
