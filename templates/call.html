@@ -1,6 +1,14 @@
 {% extends "base.html" %}
 {% block title %}{{ call.title }}{% endblock %}
-{% block description %}{{ call.claim|truncate(150) }}{% endblock %}
+{% block description %}{{ call.description }}{% endblock %}
+{% block og_type %}article{% endblock %}
+{% block head_extra %}
+<meta property="article:published_time" content="{{ call.made_on }}T00:00:00Z">
+{% if call.modified_on %}<meta property="article:modified_time" content="{{ call.modified_on }}T00:00:00Z">
+{% endif %}<meta property="article:author" content="{{ base_url }}/about/">
+<meta property="article:section" content="Forecast ledger">
+<meta name="author" content="Makho Mashoba">
+{% endblock %}
 {% block path %}/ledger/{{ call.id }}/{% endblock %}
 {% block content %}
 <p class="ledger-crumbs"><a class="hv-slate" href="/ledger/">← Calls</a> <span class="ledger-mono">{{ call.id }}</span></p>

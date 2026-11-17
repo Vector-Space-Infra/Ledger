@@ -35,13 +35,71 @@ import validate  # noqa: E402
 # Each service name, as written in a call's `service` field, mapped to its section on the site's
 # Services page (ids from the site's src/_data/services.json). Unknown names link to /services/.
 SERVICE_URLS = {
-    "Site and Power Connection Review": "/services/#line-01",
+    "Site and Power Connection Review": "/services/#site-power-review",
     "Lender Diligence Memo": "/services/#lender-memo",
-    "Data Center Business Model Comparison": "/services/#line-02",
-    "Customer Demand and Contract Assessment": "/services/#line-03",
+    "Data Center Business Model Comparison": "/services/#business-model-comparison",
+    "Customer Demand and Contract Assessment": "/services/#demand-contract-assessment",
     "Utility Application Guidance": "/services/#utility",
     "Commissioning Data & Turnover Support": "/services/#commissioning",
 }
+
+SITE_NAME = "VectorSpace Infrastructure"
+
+
+def doc_title(title) -> str:
+    """The <title>: the page's own title with the brand after it when the pair fits a search result
+    line (63 characters), else the title alone. Same rule as the site's tools/seo.js docTitle."""
+    t = " ".join(str(title or "").split())
+    if not t:
+        return SITE_NAME
+    if SITE_NAME in t:
+        return t
+    full = f"{t} | {SITE_NAME}"
+    return full if len(full) <= 63 else t
+
+
+def iso_datetime(day: str) -> str | None:
+    return f"{day}T00:00:00Z" if day else None
+
+
+def schema_graph(base: str, path: str, page_type: str, name: str, description: str,
+                 crumbs: list[tuple[str, str]], article: dict | None = None) -> str:
+    """One JSON-LD @graph for a ledger page. The organization, website and founder are described in
+    full on the site's own pages; here they are named by the same @id so search engines join them."""
+    org_id, site_id, person_id = f"{base}/#organization", f"{base}/#website", f"{base}/about/#person"
+    url = f"{base}{path}"
+    trail = [("Home", "/"), *crumbs]
+    nodes: list[dict] = [
+        {"@type": ["Organization", "ProfessionalService"], "@id": org_id, "name": SITE_NAME, "url": f"{base}/",
+         "logo": {"@type": "ImageObject", "url": f"{base}/assets/img/icon-512.png", "width": 512, "height": 512}},
+        {"@type": "WebSite", "@id": site_id, "url": f"{base}/", "name": SITE_NAME, "publisher": {"@id": org_id}},
+        {"@type": page_type, "@id": f"{url}#webpage", "url": url, "name": name, "description": description,
+         "isPartOf": {"@id": site_id}, "about": {"@id": org_id}, "breadcrumb": {"@id": f"{url}#breadcrumb"},
+         "inLanguage": "en-US"},
+        {"@type": "BreadcrumbList", "@id": f"{url}#breadcrumb",
+         "itemListElement": [{"@type": "ListItem", "position": i + 1, "name": n, "item": f"{base}{u}"}
+                             for i, (n, u) in enumerate(trail)]},
+    ]
+    if article:
+        nodes.append({"@type": "Person", "@id": person_id, "name": "Makho Mashoba", "url": f"{base}/about/",
+                      "worksFor": {"@id": org_id}})
+        nodes.append({k: v for k, v in {
+            "@type": "Article", "@id": f"{url}#article", "headline": name[:110], "description": description,
+            "datePublished": article.get("published"), "dateModified": article.get("modified"),
+            "author": {"@id": person_id}, "publisher": {"@id": org_id},
+            "image": [f"{base}/assets/img/og-calls.png"], "mainEntityOfPage": {"@id": f"{url}#webpage"},
+            "inLanguage": "en-US",
+        }.items() if v})
+    return json.dumps({"@context": "https://schema.org", "@graph": nodes}, ensure_ascii=False).replace("<", "\\u003c")
+
+
+def clip(text: str, n: int = 158) -> str:
+    """Plain text cut to n characters at a word, for meta descriptions."""
+    t = " ".join(str(text or "").split())
+    if len(t) <= n:
+        return t
+    return t[: n - 1].rsplit(" ", 1)[0].rstrip(",;:") + "…"
+
 
 MD = markdown.Markdown(extensions=["tables", "fenced_code", "sane_lists"])
 
@@ -215,7 +273,11 @@ def main(argv: list[str] | None = None) -> int:
         "theses": theses,
         "has_prior": bool(prior),
         "status_labels": L.STATUS_LABEL,
+        "doc_title": doc_title,
+        "site_name": SITE_NAME,
     })
+    base = args.base_url.rstrip("/")
+    calls_crumb = ("Calls", "/ledger/")
 
     def write(relpath: str, html: str) -> None:
         p = out / relpath
@@ -223,21 +285,42 @@ def main(argv: list[str] | None = None) -> int:
         p.write_text(html, encoding="utf-8")
 
     strip = resolved_this_quarter(root, ctx_calls, today, use_git)
+    index_desc = ("A public, dated, scored record of our forecasts about the data center market. "
+                  "Each call is frozen on the day it is made, with its resolution rule named in advance.")
     write("index.html", env.get_template("index.html").render(
+        schema=schema_graph(base, "/ledger/", "CollectionPage", "Data Center Market Forecast Ledger", index_desc, [calls_crumb]),
         calls=ctx_calls, strip=strip,
         years=sorted({c["horizon_year"] for c in ctx_calls if c["horizon_year"]}),
         thesis_slugs=sorted({c["thesis"] for c in ctx_calls if c["thesis"]}),
     ))
     for c in ctx_calls:
-        write(f"{c['id']}/index.html", env.get_template("call.html").render(call=c))
+        c["description"] = clip(c["claim"])
+        dates = [c["made_on"]] + [u["date"] for u in c["updates"] if u["date"]]
+        c["modified_on"] = max(d for d in dates if d) if any(dates) else ""
+        write(f"{c['id']}/index.html", env.get_template("call.html").render(
+            call=c,
+            schema=schema_graph(base, c["url"], "WebPage", c["title"], c["description"], [calls_crumb, (c["title"], c["url"])],
+                                article={"published": iso_datetime(c["made_on"]), "modified": iso_datetime(c["modified_on"])}),
+        ))
 
     method_md = (root / "METHOD.md")
+    method_desc = "How the VectorSpace Infrastructure forecast ledger writes, timestamps, resolves and scores its calls, including the Brier score and the void rule."
     write("method/index.html", env.get_template("method.html").render(
+        schema=schema_graph(base, "/ledger/method/", "WebPage", "Forecast Ledger Method", method_desc,
+                            [calls_crumb, ("Method", "/ledger/method/")]),
+        description=method_desc,
         body_html=md(method_md.read_text(encoding="utf-8") if method_md.exists() else "_METHOD.md is missing._")))
     for t in theses:
-        write(f"thesis/{t['slug']}/index.html", env.get_template("thesis.html").render(thesis=t))
+        t_desc = clip(t.get("summary") or f"Calls in the ledger that test the thesis: {t['title']}.")
+        write(f"thesis/{t['slug']}/index.html", env.get_template("thesis.html").render(
+            thesis=t, description=t_desc,
+            schema=schema_graph(base, t["url"], "CollectionPage", t["title"], t_desc, [calls_crumb, (t["title"], t["url"])])))
     if prior:
-        write("prior/index.html", env.get_template("prior.html").render(prior=prior, prior_scores=scores.get("prior", {})))
+        p_desc = ("Technology and macro calls made before the ledger existed, with the post that dates each one "
+                  "and the source that resolved it. Scored on their own.")
+        write("prior/index.html", env.get_template("prior.html").render(
+            prior=prior, prior_scores=scores.get("prior", {}), description=p_desc,
+            schema=schema_graph(base, "/ledger/prior/", "CollectionPage", "Prior Calls", p_desc, [calls_crumb, ("Prior calls", "/ledger/prior/")])))
 
     static = root / "static"
     if static.is_dir():
