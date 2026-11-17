@@ -37,6 +37,7 @@ import validate  # noqa: E402
 SERVICE_URLS = {
     "Site and Power Connection Review": "/services/#site-power-review",
     "Lender Diligence Memo": "/services/#lender-memo",
+    "Lender Diligence": "/services/#lender-memo",           # as FCB-2026-002 names it
     "Data Center Business Model Comparison": "/services/#business-model-comparison",
     "Customer Demand and Contract Assessment": "/services/#demand-contract-assessment",
     "Utility Application Guidance": "/services/#utility",
