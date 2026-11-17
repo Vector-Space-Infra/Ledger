@@ -6,37 +6,56 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-{% set page_title %}{% block title %}Calls{% endblock %} | VectorSpace Infrastructure{% endset %}
-{% set page_desc %}{% block description %}A public, dated, scored record of VectorSpace Infrastructure's forecasts about the data center market.{% endblock %}{% endset %}
+{#- What each page says about itself comes from blocks the page templates fill in:
+     title        the search title, without the brand (doc_title adds " | VectorSpace Infrastructure" when the pair fits)
+     description  at most 160 characters
+     path         the page's address under the site, for the canonical link
+     og_type      "website", or "article" on a call page
+     head_extra   extra tags for one kind of page (article dates on a call)
+   The structured data (one JSON-LD graph per page) is built in scripts/build.py and passed in as `schema`. -#}
+{% set raw_title %}{% block title %}Data Center Market Forecast Ledger{% endblock %}{% endset %}
+{% set page_title = doc_title(raw_title) %}
+{% set page_desc %}{% block description %}A public, dated, scored record of our forecasts about the data center market. Each call is frozen on the day it is made, with its resolution rule named in advance.{% endblock %}{% endset %}
 {% set page_url %}{{ base_url }}{% block path %}/ledger/{% endblock %}{% endset %}
 <title>{{ page_title }}</title>
 <meta name="description" content="{{ page_desc }}">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 <link rel="canonical" href="{{ page_url }}">
 
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="VectorSpace Infrastructure">
-<meta property="og:title" content="{{ page_title }}">
+<meta property="og:type" content="{% block og_type %}website{% endblock %}">
+<meta property="og:site_name" content="{{ site_name }}">
+<meta property="og:locale" content="en_US">
+<meta property="og:title" content="{{ raw_title }}">
 <meta property="og:description" content="{{ page_desc }}">
 <meta property="og:url" content="{{ page_url }}">
-<meta property="og:image" content="{{ base_url }}/assets/img/vectorspace-social.png">
+<meta property="og:image" content="{{ base_url }}/assets/img/og-calls.png">
+<meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="VectorSpace Infrastructure">
+<meta property="og:image:alt" content="Title card reading “Data center market calls: public, dated and scored”, from {{ site_name }}">
+{% block head_extra %}{% endblock %}
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="{{ page_title }}">
+<meta name="twitter:title" content="{{ raw_title }}">
 <meta name="twitter:description" content="{{ page_desc }}">
-<meta name="twitter:image" content="{{ base_url }}/assets/img/vectorspace-social.png">
+<meta name="twitter:image" content="{{ base_url }}/assets/img/og-calls.png">
+<meta name="twitter:image:alt" content="Title card reading “Data center market calls: public, dated and scored”, from {{ site_name }}">
 
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/assets/img/favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
 <meta name="theme-color" content="#F7F4EC">
+<link rel="alternate" type="application/atom+xml" title="{{ site_name }}: Notes" href="{{ base_url }}/notes/feed.xml">
 
+<link rel="preload" href="/assets/fonts/archivo-variable.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/space-mono-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/assets/css/fonts.css">
 <link rel="stylesheet" href="/assets/css/site.css">
 <link rel="stylesheet" href="/ledger/ledger.css">
 
+{% if schema %}<script type="application/ld+json">{{ schema|safe }}</script>
+
+{% endif %}
 <!-- Google Tag Manager -->
 <script>
   /* Container id lives in src/_data/site.json; remove it there to switch this off. */
@@ -109,8 +128,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <a class="footer-brand" href="/" aria-label="VectorSpace Infrastructure, home" style="display:flex;align-items:flex-start;gap:16px">
             <svg viewBox="0 0 6 6" width="46" height="46" aria-hidden="true" style="display:block;flex:0 0 auto"><rect width="6" height="6" fill="#5C5A52"></rect><path d="M6 0 V6 H0 Z" fill="#F7F4EC"></path><rect x="2.5" y="2.5" width="1" height="1" fill="#000000"></rect></svg>
             <span>
-              <span style="display:block;font-family:Archivo,sans-serif;font-variation-settings:'wdth' 125;font-weight:900;font-size:22px;line-height:0.98;letter-spacing:-0.01em;text-transform:uppercase;color:#F7F4EC">Vector<br />
-                <span style="color:#D8D2C0">Space</span></span>
+              <span style="display:block;font-family:Archivo,sans-serif;font-variation-settings:'wdth' 125;font-weight:900;font-size:22px;line-height:0.98;letter-spacing:-0.01em;text-transform:uppercase;color:#F7F4EC">Vector<span style="display:block;color:#D8D2C0">Space</span></span>
               <span class="lockup-sub" style="display:block;margin-top:7px;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.34em;text-transform:uppercase;color:#D8D2C0">Infrastructure</span>
             </span>
           </a>
