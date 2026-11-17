@@ -45,6 +45,16 @@ Local build: `python scripts/validate.py && python scripts/score.py && python sc
 Example files (`calls/_example.md`, `theses/_template.md`, `prior/_template.md`) start with `_` and are ignored by the build;
 `python scripts/validate.py --check-examples` checks them against the schema.
 
+## Search (SEO)
+
+Every page's head is built in `templates/base.html` from blocks the page templates fill (`title`, `description`, `path`,
+`og_type`, `head_extra`) and from `schema`, one JSON-LD `@graph` made in `scripts/build.py` (`schema_graph`). The graph
+names the site's Organization, WebSite and Person by the same `@id`s the site uses, so search engines join them. Call
+pages are `Article`s dated `made_on` and modified on the latest update. `doc_title` adds " | VectorSpace Infrastructure"
+when the pair fits 63 characters, the same rule as the site. Service links under a call use the anchors in
+`SERVICE_URLS`, which must match the ids in the site's `src/_data/services.json`. The Calls pages are added to the
+site's sitemap by the site's `tools/ledger-sitemap.mjs`, dated from this repo's git history.
+
 ## Deployment (Nova)
 
 - **This repo:** `.github/workflows/deploy.yml` validates every push and, on `main`, POSTs to the site Worker's deploy hook
