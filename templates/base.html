@@ -15,7 +15,7 @@
    The structured data (one JSON-LD graph per page) is built in scripts/build.py and passed in as `schema`. -#}
 {% set raw_title %}{% block title %}Data Center Market Forecast Ledger{% endblock %}{% endset %}
 {% set page_title = doc_title(raw_title) %}
-{% set page_desc %}{% block description %}A public, dated, scored record of our forecasts about the data center market. Each call is frozen on the day it is made, with its resolution rule named in advance.{% endblock %}{% endset %}
+{% set page_desc %}{% block description %}A public, dated, scored record of our data center market forecasts. Each call is frozen the day it is made, with its resolution rule named in advance.{% endblock %}{% endset %}
 {% set page_url %}{{ base_url }}{% block path %}/ledger/{% endblock %}{% endset %}
 <title>{{ page_title }}</title>
 <meta name="description" content="{{ page_desc }}">

@@ -285,8 +285,8 @@ def main(argv: list[str] | None = None) -> int:
         p.write_text(html, encoding="utf-8")
 
     strip = resolved_this_quarter(root, ctx_calls, today, use_git)
-    index_desc = ("A public, dated, scored record of our forecasts about the data center market. "
-                  "Each call is frozen on the day it is made, with its resolution rule named in advance.")
+    index_desc = ("A public, dated, scored record of our data center market forecasts. "
+                  "Each call is frozen the day it is made, with its resolution rule named in advance.")
     write("index.html", env.get_template("index.html").render(
         schema=schema_graph(base, "/ledger/", "CollectionPage", "Data Center Market Forecast Ledger", index_desc, [calls_crumb]),
         calls=ctx_calls, strip=strip,
